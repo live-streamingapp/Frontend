@@ -1,0 +1,176 @@
+import { useFormik } from "formik";
+import React from "react";
+import axios from "axios";
+
+const LetsTalk = () => {
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      phone: "",
+      country: "",
+      city: "",
+      message: "",
+    },
+    validate: (values) => {
+      const errors = {};
+      if (!values.name) {
+        errors.name = "Name is required";
+      }
+      if (!values.email) {
+        errors.email = "Email is required";
+      } else if (
+        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+      ) {
+        errors.email = "Invalid email. eg: vastu@gmail.com";
+      }
+      if (!values.phone) {
+        errors.phone = "Phone number is required";
+      } else if (!/^[0-9]{10}$/.test(values.phone)) {
+        errors.phone = "Phone must be 10 digits";
+      }
+      if (!values.country) {
+        errors.country = "Country is required";
+      }
+      if (!values.city) {
+        errors.city = "City is required";
+      }
+      return errors;
+    },
+
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        // send data to backend
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/contact`,
+          values
+        );
+
+        if (response.data.success) {
+          alert(
+            `Thank you ${values.name}! Your message has been received. We'll get back to you soon at ${values.email}.`
+          );
+          resetForm();
+        } else {
+          alert("Something went wrong. Please try again later.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Server error. Please try again later.");
+      }
+    },
+  });
+
+  return (
+    <section className="py-8 px-2 mx-auto max-w-[600px] bg-[#fbfbfb] flex flex-col items-center">
+      {/* LetsTalk Card */}
+      <div className="max-w-3xl w-full bg-gradient-to-br from-[#ff7a6c] via-[#ffa875] to-[#ff7a6c] rounded-3xl shadow-2xl p-3 sm:p-10">
+        <h2 className="text-center text-4xl font-bold text-white mb-6">
+          Let&apos;s Talk
+        </h2>
+        <form
+          onSubmit={formik.handleSubmit}
+          className="flex flex-col gap-4 border border-white rounded-xl bg-[#ffb69c] backdrop-blur-[2px] p-3"
+        >
+          {/* Name */}
+          <input
+            type="text"
+            name="name"
+            placeholder="Name*"
+            value={formik.values.name}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none"
+          />
+          {formik.touched.name && formik.errors.name && (
+            <p className="text-sm text-red-600">{formik.errors.name}</p>
+          )}
+
+          {/* Email */}
+          <input
+            type="email"
+            name="email"
+            placeholder="Email*"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none"
+          />
+          {formik.touched.email && formik.errors.email && (
+            <p className="text-sm text-red-600">{formik.errors.email}</p>
+          )}
+
+          {/* Phone */}
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone Number*"
+            value={formik.values.phone}
+            onChange={(e) => {
+              // Allow only numbers
+              const onlyNums = e.target.value.replace(/\D/g, "");
+              // Limit to 15 digits
+              if (onlyNums.length <= 15) {
+                formik.setFieldValue("phone", onlyNums);
+              }
+            }}
+            onBlur={formik.handleBlur}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none"
+            inputMode="numeric"
+            pattern="[0-9]*"
+          />
+
+          {formik.touched.phone && formik.errors.phone && (
+            <p className="text-sm text-red-600">{formik.errors.phone}</p>
+          )}
+          {/* Country */}
+          <input
+            type="text"
+            name="country"
+            placeholder="Country"
+            value={formik.values.country}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none"
+          />
+          {formik.touched.country && formik.errors.country && (
+            <p className="text-sm text-red-600">{formik.errors.country}</p>
+          )}
+          {/* City */}
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={formik.values.city}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none"
+          />
+          {formik.touched.city && formik.errors.city && (
+            <p className="text-sm text-red-600">{formik.errors.city}</p>
+          )}
+
+          {/* Message */}
+          <textarea
+            name="message"
+            rows="4"
+            placeholder="Message"
+            value={formik.values.message}
+            onChange={formik.handleChange}
+            className="w-full bg-[#fed2b4] px-4 py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none resize-none"
+          ></textarea>
+
+          {/* Button */}
+          <button
+            type="submit"
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-[#c02c07] to-red-600 text-white font-semibold shadow-lg transform hover:scale-101 transition-transform cursor-pointer"
+          >
+            Send Message
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+};
+
+export default LetsTalk;

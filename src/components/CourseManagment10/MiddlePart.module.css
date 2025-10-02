@@ -1,0 +1,125 @@
+/* 
+.Parent{
+   display: inline-flex;
+   align-items: flex-start;
+   gap: 90px; 
+   margin-top: 40px;
+}
+
+.Parent > .RudrakshImage{
+  width: 352px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.Parent> .RudrakshImage > .UpperParentBox{
+  border-radius: 10px;
+}
+
+.Parent> .RudrakshImage >.LowerParentBox{
+    display: flex;
+    height: 10px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    align-self: stretch;  
+ }
+
+.RedRoundedCircle{
+    border-radius: 46px;
+    background-color: #C50200;
+    width: 32px;
+    height: 10px;
+}
+
+.GreyRoundedCircle{
+    border-radius: 46px;
+    background-color: #C0C0C0;
+    width: 10px;
+    height: 10px;
+}
+
+.Parent > .Editingpart{
+  width: 307px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+
+.Parent > .Editingpart > .EditingUpperPart{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.Parent > .Editingpart > .EditingUpperPart > .PriceTag{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.EditingLowerPart{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  align-self: stretch;
+}
+
+.EditingLowerPart > button{
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid #BB0E00;
+  box-shadow:  0 4px 12.4px 0 rgba(255, 255, 255, 0.25) inset;
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.ProductMeta{
+  width: 370px; 
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.ProductMeta > div{
+  width: 166px;
+  height: 121px;
+  border: 1px solid #E1E1E1;
+  border-radius: 15px;
+  background: #F8F8F8;
+  box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.10);
+  display: flex;
+  align-items: center;
+  padding: 10px 48px 9px 10px;
+}
+
+.ProductMeta > div > div{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ProductMeta > div > div > div{
+  border-radius: 5px;
+  background-color: #FFB3AD;
+  width: 49px;
+  height: 49px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+} */
