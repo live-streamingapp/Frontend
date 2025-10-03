@@ -1,110 +1,136 @@
 // src/components/courseProgress/CourseProgressPage.jsx
-import React from 'react';
-import StudentProfileHeader from './StudentProfileHeader';
-import StatsCard from './StatsCard';
-import ProgressChart from './ProgressChart';
+import React from "react";
+import StudentProfileHeader from "./StudentProfileHeader";
+import StatsCard from "./StatsCard";
+import ProgressChart from "./ProgressChart";
+import LoadingOverlay from "../common/LoadingOverlay";
 
-const sampleStudent = {
-  name: 'Aditi R. Sharma',
-  id: 'STU-2025-0378',
-  course: 'Advanced Vedic Astrology',
-  avatar: "/images/aditi.png" // or import from src/assets
+const getStatusClass = (status) => {
+	const normalized = status?.toLowerCase();
+	if (normalized === "on track") return "text-green-600";
+	if (normalized === "behind") return "text-orange-500";
+	if (normalized === "ahead") return "text-blue-600";
+	return "text-gray-600";
 };
 
-const chartData = [
-  {date: 'Week 1', value: 45},
-  {date: 'Week 2', value: 60},
-  {date: 'Week 3', value: 55},
-  {date: 'Week 4', value: 80},
-  {date: 'Week 5', value: 70},
-  {date: 'Week 6', value: 88},
-];
+const buildChartData = (timeline, progressPercent) => {
+	if (Array.isArray(timeline) && timeline.length > 0) {
+		return timeline.map((point) => ({
+			date: point.label,
+			value: Math.min(100, Math.max(0, point.value ?? 0)),
+		}));
+	}
+	const percent = Math.min(100, Math.max(0, progressPercent ?? 0));
+	return [
+		{ date: "Start", value: 0 },
+		{ date: "Current", value: percent },
+	];
+};
 
-export default function CourseProgressPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        {/* <div className="flex gap-3">
-          <button className="px-3 py-2 rounded bg-gray-100">All Students</button>
-          <button className="px-3 py-2 rounded bg-v-red-600 text-white">Course Progress</button>
-          <button className="px-3 py-2 rounded bg-gray-100">Booking History</button>
-          <button className="px-3 py-2 rounded bg-gray-100">Reports Download</button>
-        </div> */}
-        {/* <button className="px-4 py-2 border rounded">+ Add Students</button> */}
-      </div>
+const formatFraction = (completed, total) => {
+	if (total == null || total === 0) {
+		return `${completed ?? 0}`;
+	}
+	return `${completed ?? 0} / ${total}`;
+};
 
-      <StudentProfileHeader student={sampleStudent}/>
+export default function CourseProgressPage({
+	entries = [],
+	isLoading,
+	isFetching,
+	isError,
+}) {
+	if (isLoading) {
+		return <LoadingOverlay fullscreen message="Loading course progress..." />;
+	}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-1 grid grid-cols-2 gap-4">
-                <StatsCard 
-          title="Videos Watched" 
-          value="14 / 18" 
-          icon="/images/videos.png"
-        />
-        <StatsCard 
-          title="Quizzes Completed" 
-          value="4 / 5" 
-          icon="/images/quizzes.png"
-        />
-        <StatsCard 
-          title="Progress" 
-          value="78%" 
-          icon="/images/progress.png"
-        />
-        <StatsCard 
-          title="Status" 
-          value={<span className="text-green-600">On Track</span>} 
-          icon="/images/status.png"
-        />
-        </div>
+	if (isError) {
+		return (
+			<p className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-red-700">
+				Failed to load course progress. Please try again.
+			</p>
+		);
+	}
 
-        <div className="lg:col-span-2">
-          <ProgressChart data={chartData}/>
-        </div>
-      </div>
+	if (!entries.length) {
+		return (
+			<p className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500">
+				No course progress tracked yet.
+			</p>
+		);
+	}
 
-      {/* duplicate block for second student if needed */}
-      <div className="flex items-center justify-between">
-        {/* <div className="flex gap-3">
-          <button className="px-3 py-2 rounded bg-gray-100">All Students</button>
-          <button className="px-3 py-2 rounded bg-v-red-600 text-white">Course Progress</button>
-          <button className="px-3 py-2 rounded bg-gray-100">Booking History</button>
-          <button className="px-3 py-2 rounded bg-gray-100">Reports Download</button>
-        </div> */}
-        {/* <button className="px-4 py-2 border rounded">+ Add Students</button> */}
-      </div>
+	return (
+		<div className="relative space-y-8">
+			{isFetching && <LoadingOverlay message="Refreshing course progress..." />}
 
-      <StudentProfileHeader student={sampleStudent}/>
+			{entries.map((entry) => {
+				const key =
+					entry._id ??
+					`${entry.student?._id ?? "student"}-${entry.course?._id ?? "course"}`;
+				const videosTotal = entry.videosTotal ?? 0;
+				const videosCompleted = entry.videosCompleted ?? 0;
+				const quizzesTotal = entry.quizzesTotal ?? 0;
+				const quizzesCompleted = entry.quizzesCompleted ?? 0;
+				const progressPercent = Math.min(
+					100,
+					Math.max(0, entry.progressPercent ?? 0)
+				);
+				const status = entry.status ?? "On Track";
+				const stats = [
+					{
+						title: "Videos Watched",
+						value: formatFraction(videosCompleted, videosTotal),
+						icon: "/images/videos.png",
+					},
+					{
+						title: "Quizzes Completed",
+						value: formatFraction(quizzesCompleted, quizzesTotal),
+						icon: "/images/quizzes.png",
+					},
+					{
+						title: "Progress",
+						value: `${progressPercent}%`,
+						icon: "/images/progress.png",
+					},
+					{
+						title: "Status",
+						value: (
+							<span className={`font-semibold ${getStatusClass(status)}`}>
+								{status}
+							</span>
+						),
+						icon: "/images/status.png",
+					},
+				];
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-1 grid grid-cols-2 gap-4">
-        <StatsCard 
-          title="Videos Watched" 
-          value="14 / 18" 
-          icon="/images/videos.png"
-        />
-        <StatsCard 
-          title="Quizzes Completed" 
-          value="4 / 5" 
-          icon="/images/quizzes.png"
-        />
-        <StatsCard 
-          title="Progress" 
-          value="78%" 
-          icon="/images/progress.png"
-        />
-        <StatsCard 
-          title="Status" 
-          value={<span className="text-green-600">On Track</span>} 
-          icon="/images/status.png"
-        />
-        </div>
+				const chartData = buildChartData(entry.timeline, progressPercent);
 
-        <div className="lg:col-span-2">
-          <ProgressChart data={chartData}/>
-        </div>
-      </div>
-    </div>
-  );
+				return (
+					<article key={key} className="space-y-4">
+						<StudentProfileHeader
+							student={{
+								name: entry.student?.name ?? "Unknown Student",
+								id: entry.student?._id ?? "",
+								course: entry.course?.title ?? "",
+								avatar: entry.avatar,
+								email: entry.student?.email,
+							}}
+						/>
+
+						<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+							<div className="grid grid-cols-2 gap-4 lg:col-span-1">
+								{stats.map((stat) => (
+									<StatsCard key={stat.title} {...stat} />
+								))}
+							</div>
+							<div className="lg:col-span-2">
+								<ProgressChart data={chartData} />
+							</div>
+						</div>
+					</article>
+				);
+			})}
+		</div>
+	);
 }

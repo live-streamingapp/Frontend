@@ -1,66 +1,78 @@
-import React from "react";
-import axios from "axios";
+import React, { useCallback } from "react";
+import toast from "react-hot-toast";
+import { useAddToCartMutation } from "../../hooks/useCartApi";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { ROLES } from "../../utils/constants";
 
-export default function BookCard({ book, onClick, userToken }) {
-  const truncateDescription = (text, wordLimit) => {
-    if (!text) return "";
-    const words = text.split(" ");
-    return words.length > wordLimit
-      ? words.slice(0, wordLimit).join(" ") + "..."
-      : text;
-  };
+export default function BookCard({ book, onClick }) {
+	const truncateDescription = (text, wordLimit) => {
+		if (!text) return "";
+		const words = text.split(" ");
+		return words.length > wordLimit
+			? words.slice(0, wordLimit).join(" ") + "..."
+			: text;
+	};
 
-  const handleAddToCart = async () => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/cart/add`,
-        {
-          productId: book._id,
-          quantity: 1,
-          kind: "Book",
-        },
-        {
-          withCredentials: true,
-        }
-      );
-      alert("Item added to cart!");
-      console.log(response.data.cart);
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-      alert("Failed to add item to cart");
-    }
-  };
+	const { mutate: addToCart, isPending } = useAddToCartMutation();
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === ROLES.ADMIN || currentUser?.role === ROLES.ASTROLOGER;
 
-  return (
-    <div className="flex flex-col justify-between p-2 bg-white shadow-lg rounded-md">
-      <div
-        onClick={onClick}
-        className="cursor-pointer transition-shadow duration-300 text-center w-[300px]"
-      >
-        <img
-          src={book.image}
-          alt={book.title}
-          className="h-40 object-cover mx-auto rounded mb-4"
-        />
-        <h3 className="font-semibold text-gray-900 mb-1 text-sm">
-          {book.title}
-        </h3>
-        <p className="text-xs text-gray-500 mb-2">
-          {truncateDescription(book.description, 10)}
-        </p>
-        <p className="text-sm font-semibold text-gray-900">{book.price}</p>
-      </div>
-      <div className="flex gap-[1rem]">
-        <button className="flex-1 border-2 py-[5px] border-red-700 rounded-md text-red-700 text-sm cursor-pointer">
-          View Details
-        </button>
-        <button
-          onClick={handleAddToCart}
-          className="flex-1 py-[5px] rounded-md cursor-pointer bg-amber-800 text-white"
-        >
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
+	const handleAddToCart = useCallback(() => {
+		if (isAdmin) {
+			toast.error("Admin accounts cannot add products to the cart.");
+			return;
+		}
+
+		const productId = book._id ?? book.id;
+		if (!productId) {
+			toast.error("Missing book identifier. Please try again later.");
+			return;
+		}
+
+		addToCart({
+			productId,
+			quantity: 1,
+			kind: book.kind ?? "Book",
+		});
+	}, [addToCart, book, isAdmin]);
+
+	return (
+		<div className="flex flex-col justify-between p-2 bg-white shadow-lg rounded-md">
+			<div
+				onClick={onClick}
+				className="cursor-pointer transition-shadow duration-300 text-center w-[300px]"
+			>
+				<img
+					src={book.image}
+					alt={book.title}
+					className="h-40 object-cover mx-auto rounded mb-4"
+				/>
+				<h3 className="font-semibold text-gray-900 mb-1 text-sm">
+					{book.title}
+				</h3>
+				<p className="text-xs text-gray-500 mb-2">
+					{truncateDescription(book.description, 10)}
+				</p>
+				<p className="text-sm font-semibold text-gray-900">{book.price}</p>
+			</div>
+			<div className="flex gap-[1rem]">
+				<button className="flex-1 border-2 py-[5px] border-red-700 rounded-md text-red-700 text-sm cursor-pointer">
+					View Details
+				</button>
+				<button
+					onClick={handleAddToCart}
+					disabled={isPending || isAdmin}
+					className={`flex-1 py-[5px] rounded-md cursor-pointer bg-amber-800 text-white transition-opacity ${
+						isPending || isAdmin
+							? "opacity-60 cursor-not-allowed"
+							: "hover:opacity-90"
+					}`}
+				>
+					{isAdmin ? "Admin Only" : isPending ? "Adding..." : "Add to Cart"}
+				</button>
+			</div>
+		</div>
+	);
 }

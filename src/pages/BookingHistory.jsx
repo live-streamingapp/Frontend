@@ -1,165 +1,186 @@
 import React from "react";
+import {
+	CalendarDaysIcon,
+	ClockIcon,
+	UserCircleIcon,
+	BanknotesIcon,
+	EllipsisVerticalIcon,
+} from "@heroicons/react/24/outline";
+import LoadingOverlay from "../components/common/LoadingOverlay";
 
-const bookings = [
-  {
-    id: "STU-2025-0378",
-    name: "Aditi R. Sharma",
-    course: "Advanced Vedic Astrology",
-    date: "Jul 11, 2025",
-    time: "6:00 PM",
-    astrologer: "Rajeev Malhotra",
-    payment: 799,
-    payout: 799,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-  {
-    id: "STU-2025-0379",
-    name: "Rahul P. Kumar",
-    course: "Advanced Vedic Astrology",
-    date: "Aug 05, 2025",
-    time: "4:30 PM",
-    astrologer: "Priya Sharma",
-    payment: 899,
-    payout: 899,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-   {
-    id: "STU-2025-0378",
-    name: "Aditi R. Sharma",
-    course: "Advanced Vedic Astrology",
-    date: "Jul 11, 2025",
-    time: "6:00 PM",
-    astrologer: "Rajeev Malhotra",
-    payment: 799,
-    payout: 799,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-   {
-    id: "STU-2025-0378",
-    name: "Aditi R. Sharma",
-    course: "Advanced Vedic Astrology",
-    date: "Jul 11, 2025",
-    time: "6:00 PM",
-    astrologer: "Rajeev Malhotra",
-    payment: 799,
-    payout: 799,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-   {
-    id: "STU-2025-0378",
-    name: "Aditi R. Sharma",
-    course: "Advanced Vedic Astrology",
-    date: "Jul 11, 2025",
-    time: "6:00 PM",
-    astrologer: "Rajeev Malhotra",
-    payment: 799,
-    payout: 799,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-   {
-    id: "STU-2025-0378",
-    name: "Aditi R. Sharma",
-    course: "Advanced Vedic Astrology",
-    date: "Jul 11, 2025",
-    time: "6:00 PM",
-    astrologer: "Rajeev Malhotra",
-    payment: 799,
-    payout: 799,
-    status: "Paid",
-    image: "/images/aditi.png",
-  },
-  // Add more booking objects here to fill rows
-];
+const fallbackAvatar = "/images/astrologer-avatar.png";
 
-export default function BookingHistory() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {bookings.map((b, index) => (
-        <div key={index} className="bg-[#E1E1E1] p-4 rounded-xl">
-          {/* Student Info */}
-          <div className="bg-white p-4 rounded-xl flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <img
-                src={b.image}
-                alt={b.name}
-                className="w-14 h-14 rounded-full object-cover"
-              />
-              <div>
-                <h2 className="font-bold text-gray-900">{b.name}</h2>
-                <p className="text-xs text-gray-500">ID: {b.id}</p>
-                <p className="text-sm text-gray-700">{b.course}</p>
-              </div>
-            </div>
-            <img src="/images/3dots.png" alt="options" className="w-5 h-5" />
-          </div>
+const formatDate = (value) => {
+	if (!value) return "—";
+	try {
+		return new Date(value).toLocaleDateString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	} catch {
+		return "—";
+	}
+};
 
-          {/* Details */}
-          <div className="bg-white mt-3 p-4 rounded-xl space-y-2">
-            {/* Date */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <img src="/images/time-icon.png" alt="date" className="w-4 h-4" />
-                <span className="text-gray-600">Date:</span>
-              </div>
-              <span className="font-medium text-gray-800">{b.date}</span>
-            </div>
+const formatTime = (value) => {
+	if (!value) return "—";
+	const [hours, minutes] = value.split(":");
+	if (hours == null || minutes == null) return value;
+	const date = new Date();
+	date.setHours(Number(hours), Number(minutes));
+	return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+};
 
-            {/* Time */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <img src="/images/time-icon.png" alt="time" className="w-4 h-4" />
-                <span className="text-gray-600">Time:</span>
-              </div>
-              <span className="font-medium text-gray-800">{b.time}</span>
-            </div>
+const formatCurrency = (value) => {
+	const amount = Number.isFinite(value) ? value : 0;
+	return new Intl.NumberFormat("en-IN", {
+		style: "currency",
+		currency: "INR",
+		maximumFractionDigits: 0,
+	}).format(amount);
+};
 
-            {/* Astrologer */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <img src="/images/time-icon.png" alt="astrologer" className="w-4 h-4" />
-                <span className="text-gray-600">Astrologer:</span>
-              </div>
-              <span className="font-medium text-gray-800">{b.astrologer}</span>
-            </div>
+const getStatusClasses = (status) => {
+	const normalized = status?.toLowerCase();
+	if (normalized === "paid") return "bg-green-100 text-green-700";
+	if (normalized === "pending") return "bg-yellow-100 text-yellow-700";
+	if (normalized === "failed") return "bg-red-100 text-red-700";
+	return "bg-gray-100 text-gray-600";
+};
 
-                            {/* Payment */}
-                <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <img src="/images/time-icon.png" alt="payment" className="w-4 h-4" />
-                    <span className="text-gray-600">Payment:</span>
-                </div>
-                <span className="font-medium text-gray-800">₹{b.payment}</span>
-                </div>
+const DetailRow = ({ icon, label, value }) => (
+	<div className="flex items-center justify-between text-sm text-gray-700">
+		<div className="flex items-center gap-2 text-gray-500">
+			{icon}
+			<span>{label}</span>
+		</div>
+		<span className="font-medium text-gray-900">{value}</span>
+	</div>
+);
 
-                {/* Total Payout */}
-                <div className="flex justify-between items-center border-t border-[#BB0E00] pt-2">
-                <div className="flex items-center gap-2">
-                    <img src="/images/time-icon.png" alt="payout" className="w-4 h-4" />
-                    <span className="text-gray-600">Total Payout:</span>
-                </div>
-                <div className="text-right">
-                    <p className="font-bold text-gray-900">₹{b.payout}</p>
-                    <p
-                    className={`text-xs font-semibold ${
-                        b.status === "Paid" ? "text-[#189200]" : "text-red-500"
-                    }`}
-                    >
-                    {b.status}
-                    </p>
-                </div>
-            </div>
+const BookingHistory = ({ bookings = [], isLoading, isFetching, isError }) => {
+	if (isLoading) {
+		return <LoadingOverlay fullscreen message="Loading booking history..." />;
+	}
 
-          </div>
+	if (isError) {
+		return (
+			<p className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-red-700">
+				Failed to load booking history. Please try again.
+			</p>
+		);
+	}
 
-          {/* Footer Strip */}
-          <div className="w-full h-3 rounded-b-xl" style={{ backgroundColor: "#BB0E00" }}></div>
-        </div>
-      ))}
-    </div>
-  );
-}
+	if (!bookings.length) {
+		return (
+			<p className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500">
+				No bookings recorded yet.
+			</p>
+		);
+	}
+
+	return (
+		<section className="relative">
+			{isFetching && <LoadingOverlay message="Refreshing booking history..." />}
+
+			<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+				{bookings.map((booking) => {
+					const key =
+						booking._id ??
+						`${booking.student?._id ?? "student"}-${
+							booking.course?._id ?? "course"
+						}-${booking.sessionDate}`;
+					const studentName = booking.student?.name ?? "Unknown Student";
+					const studentId = booking.student?._id ?? "—";
+					const courseTitle = booking.course?.title ?? "—";
+					const sessionDate = formatDate(booking.sessionDate);
+					const sessionTime = formatTime(booking.sessionTime);
+					const astrologerName = booking.astrologerName ?? "—";
+					const paymentAmount = formatCurrency(booking.paymentAmount);
+					const payoutAmount = formatCurrency(booking.payoutAmount);
+					const paymentStatus = booking.paymentStatus ?? "Pending";
+					const statusClasses = getStatusClasses(paymentStatus);
+					const avatar =
+						booking.avatar || booking.student?.avatar || fallbackAvatar;
+
+					return (
+						<article
+							key={key}
+							className="space-y-3 rounded-2xl border border-gray-200 bg-[#F7F7F7] p-4 shadow-sm"
+						>
+							<div className="flex items-start justify-between rounded-2xl bg-white p-4 shadow-sm">
+								<div className="flex items-center gap-3">
+									<img
+										src={avatar}
+										alt={studentName}
+										className="h-14 w-14 rounded-full object-cover"
+										onError={(event) => {
+											event.currentTarget.src = fallbackAvatar;
+										}}
+									/>
+									<div>
+										<h2 className="text-base font-semibold text-gray-900">
+											{studentName}
+										</h2>
+										<p className="text-xs text-gray-500">ID: {studentId}</p>
+										<p className="text-sm text-gray-600">{courseTitle}</p>
+									</div>
+								</div>
+								<button
+									type="button"
+									className="rounded-md p-2 text-gray-400 hover:bg-gray-100"
+									aria-label="Booking actions"
+								>
+									<EllipsisVerticalIcon className="h-5 w-5" />
+								</button>
+							</div>
+
+							<div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+								<DetailRow
+									icon={<CalendarDaysIcon className="h-4 w-4" />}
+									label="Date"
+									value={sessionDate}
+								/>
+								<DetailRow
+									icon={<ClockIcon className="h-4 w-4" />}
+									label="Time"
+									value={sessionTime}
+								/>
+								<DetailRow
+									icon={<UserCircleIcon className="h-4 w-4" />}
+									label="Astrologer"
+									value={astrologerName}
+								/>
+								<DetailRow
+									icon={<BanknotesIcon className="h-4 w-4" />}
+									label="Payment"
+									value={paymentAmount}
+								/>
+
+								<div className="flex items-center justify-between border-t border-[#BB0E00]/30 pt-3 text-sm">
+									<div className="flex items-center gap-2 text-gray-500">
+										<BanknotesIcon className="h-4 w-4" />
+										<span>Total payout</span>
+									</div>
+									<div className="text-right">
+										<p className="text-base font-semibold text-gray-900">
+											{payoutAmount}
+										</p>
+										<span
+											className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${statusClasses}`}
+										>
+											{paymentStatus}
+										</span>
+									</div>
+								</div>
+							</div>
+						</article>
+					);
+				})}
+			</div>
+		</section>
+	);
+};
+
+export default BookingHistory;

@@ -1,30 +1,27 @@
 import React from "react";
-import Header from "../components/Header/Header";
-import AstroCourseHeader from "../components/AstrologerCourse/AstroCourseHeader";
-import AstroCourseContainer from "../components/AstrologerCourse/AstroCourseContainer";
+import { Navigate } from "react-router-dom";
 import CourseHeader from "../components/StudentCourses/CourseHeader";
 import CourseContainer from "../components/StudentCourses/CourseContainer";
+import { useAppSelector } from "../store/hooks";
+import { selectCurrentUser } from "../store/slices/authSlice";
 
 const Course = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role; // "student" or "astrologer"
+	const user = useAppSelector(selectCurrentUser);
+	const role = user?.role;
 
-  return (
-    <>
-      <Header />
-      {role === "astrologer" ? (
-        <>
-          <AstroCourseHeader />
-          <AstroCourseContainer />
-        </>
-      ) : (
-        <>
-          <CourseHeader />
-          <CourseContainer />
-        </>
-      )}
-    </>
-  );
+	// Redirect admin/astrologer to admin dashboard
+	// They should use admin panel for course management
+	if (role === "admin" || role === "astrologer") {
+		return <Navigate to="/admin/dashboard" replace />;
+	}
+
+	// Show student course view
+	return (
+		<>
+			<CourseHeader />
+			<CourseContainer />
+		</>
+	);
 };
 
 export default Course;

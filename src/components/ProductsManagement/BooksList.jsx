@@ -1,502 +1,663 @@
-import React, { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import AdminLayout from "../../Layout/AdminLayout";
+import {
+	useBooksQuery,
+	useDeleteBookMutation,
+	useUpdateBookMutation,
+} from "../../hooks/useBooksApi";
+
+const DEFAULT_HIGHLIGHTS = {
+	whyThisBook: "",
+	difference: "",
+	whoCanBuy: "",
+};
+
+const ensureArray = (value, fallback = []) =>
+	Array.isArray(value) ? value : fallback;
+
+const sanitizeCommaSeparated = (value) =>
+	value
+		.split(",")
+		.map((item) => item.trim())
+		.filter(Boolean);
+
+const normalizeBookForEditing = (book) => {
+	const safe = JSON.parse(JSON.stringify(book ?? {}));
+
+	return {
+		...safe,
+		id: safe._id || safe.id,
+		title: safe.title ?? "",
+		description: safe.description ?? "",
+		price: safe.price ?? "",
+		coverImage: safe.coverImage ?? "",
+		highlights: {
+			...DEFAULT_HIGHLIGHTS,
+			...(safe.highlights ?? {}),
+		},
+		keyFeatures: ensureArray(safe.keyFeatures, [{ feature: "" }]).map(
+			(feature) => ({
+				_id: feature?._id,
+				feature: feature?.feature ?? "",
+			})
+		),
+		targetAudience: ensureArray(safe.targetAudience),
+		languageOptions: ensureArray(safe.languageOptions, [
+			{ language: "", stock: 0, buyLink: "", available: true },
+		]).map((option) => ({
+			_id: option?._id,
+			language: option?.language ?? "",
+			stock: option?.stock ?? 0,
+			buyLink: option?.buyLink ?? "",
+			available:
+				typeof option?.available === "boolean"
+					? option.available
+					: option?.available === "false"
+					? false
+					: true,
+		})),
+	};
+};
 
 const BooksList = () => {
-  const navigate = useNavigate();
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+	const navigate = useNavigate();
+	const { data: books = [], isLoading, isError } = useBooksQuery();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBook, setSelectedBook] = useState(null);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedBook, setSelectedBook] = useState(null);
+	const [coverFile, setCoverFile] = useState(null);
+	const [deletingBookId, setDeletingBookId] = useState(null);
 
-  // Fetch books from API
-  const fetchBooks = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/books`, {
-        withCredentials: true,
-      });
-      if (res.data.status) {
-        setBooks(res.data.data);
-      } else {
-        setError("Failed to fetch books");
-      }
-    } catch (err) {
-      console.error("Error fetching books:", err);
-      setError("Failed to fetch books");
-    } finally {
-      setLoading(false);
-    }
-  };
+	const updateBookMutation = useUpdateBookMutation({
+		onSuccess: () => {
+			setIsModalOpen(false);
+			setSelectedBook(null);
+			setCoverFile(null);
+		},
+	});
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
+	const deleteBookMutation = useDeleteBookMutation({
+		onMutate: (bookId) => setDeletingBookId(bookId),
+		onSettled: () => setDeletingBookId(null),
+	});
 
-  const handleEdit = (book) => {
-    // Ensure all nested objects and arrays exist with default values
-    const bookToEdit = {
-      ...book,
-      // Use the correct ID field
-      id: book._id || book.id,
-      highlights: book.highlights || {
-        whyThisBook: "",
-        difference: "",
-        whoCanBuy: "",
-      },
-      keyFeatures: book.keyFeatures || [],
-      targetAudience: book.targetAudience || [],
-      languageOptions: book.languageOptions || [
-        { language: "", stock: 0, buyLink: "", available: true },
-      ],
-    };
+	const handleEdit = (book) => {
+		setCoverFile(null);
+		setSelectedBook(normalizeBookForEditing(book));
+		setIsModalOpen(true);
+	};
 
-    console.log("Editing book:", bookToEdit);
-    setSelectedBook(bookToEdit);
-    setIsModalOpen(true);
-  };
+	const handleDelete = (bookId) => {
+		if (!bookId) return;
+		if (!window.confirm("Are you sure you want to delete this book?")) return;
+		deleteBookMutation.mutate(bookId);
+	};
 
-  const handleDelete = async (bookId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this book?"
-    );
-    if (!confirmed) return;
+	const handleFieldChange = (event) => {
+		const { name, value, type } = event.target;
+		const parsedValue = type === "number" ? Number(value) : value;
+		setSelectedBook((prev) => ({
+			...prev,
+			[name]: parsedValue,
+		}));
+	};
 
-    try {
-      // Use _id for API call
-      const id = bookId._id || bookId;
-      const res = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/books/${id}`,
-        { withCredentials: true }
-      );
-      if (res.data.status) {
-        setBooks((prev) => prev.filter((book) => (book._id || book.id) !== id));
-      } else {
-        alert("Failed to delete book");
-      }
-    } catch (err) {
-      console.error("Error deleting book:", err);
-      alert("Failed to delete book");
-    }
-  };
+	const handleHighlightChange = (field, value) => {
+		setSelectedBook((prev) => ({
+			...prev,
+			highlights: {
+				...prev?.highlights,
+				[field]: value,
+			},
+		}));
+	};
 
-  // Unified input change handler
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    console.log(`Updating field: ${name} with value:`, value);
+	const handleKeyFeatureChange = (index, value) => {
+		setSelectedBook((prev) => {
+			const updated = [...(prev?.keyFeatures ?? [])];
+			updated[index] = {
+				...updated[index],
+				feature: value,
+			};
+			return {
+				...prev,
+				keyFeatures: updated,
+			};
+		});
+	};
 
-    setSelectedBook((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+	const handleAddKeyFeature = () => {
+		setSelectedBook((prev) => ({
+			...prev,
+			keyFeatures: [...(prev?.keyFeatures ?? []), { feature: "" }],
+		}));
+	};
 
-  // Handle nested highlights updates
-  const handleHighlightChange = (field, value) => {
-    console.log(`Updating highlight ${field}:`, value);
+	const handleRemoveKeyFeature = (index) => {
+		setSelectedBook((prev) => {
+			const updated = [...(prev?.keyFeatures ?? [])];
+			updated.splice(index, 1);
+			return {
+				...prev,
+				keyFeatures: updated.length ? updated : [{ feature: "" }],
+			};
+		});
+	};
 
-    setSelectedBook((prev) => ({
-      ...prev,
-      highlights: {
-        ...prev.highlights,
-        [field]: value,
-      },
-    }));
-  };
+	const handleLanguageOptionChange = (index, field, value) => {
+		setSelectedBook((prev) => {
+			const updated = [...(prev?.languageOptions ?? [])];
+			if (!updated[index]) {
+				updated[index] = {
+					language: "",
+					stock: 0,
+					buyLink: "",
+					available: true,
+				};
+			}
 
-  // Handle key features updates
-  const handleKeyFeatureChange = (index, value) => {
-    console.log(`Updating key feature ${index}:`, value);
+			updated[index] = {
+				...updated[index],
+				[field]: field === "stock" ? Number(value) || 0 : value,
+			};
 
-    setSelectedBook((prev) => {
-      const updatedFeatures = [...prev.keyFeatures];
-      if (updatedFeatures[index]) {
-        updatedFeatures[index] = {
-          ...updatedFeatures[index],
-          feature: value,
-        };
-      } else {
-        updatedFeatures[index] = { feature: value };
-      }
-      return {
-        ...prev,
-        keyFeatures: updatedFeatures,
-      };
-    });
-  };
+			return {
+				...prev,
+				languageOptions: updated,
+			};
+		});
+	};
 
-  // Handle language options updates
-  const handleLanguageOptionChange = (index, field, value) => {
-    console.log(`Updating language option ${index} ${field}:`, value);
+	const handleLanguageAvailabilityToggle = (index, checked) => {
+		setSelectedBook((prev) => {
+			const updated = [...(prev?.languageOptions ?? [])];
+			if (!updated[index]) return prev;
+			updated[index] = {
+				...updated[index],
+				available: checked,
+			};
+			return {
+				...prev,
+				languageOptions: updated,
+			};
+		});
+	};
 
-    setSelectedBook((prev) => {
-      const updatedLangs = [...prev.languageOptions];
-      if (!updatedLangs[index]) {
-        updatedLangs[index] = {
-          language: "",
-          stock: 0,
-          buyLink: "",
-          available: true,
-        };
-      }
-      updatedLangs[index] = {
-        ...updatedLangs[index],
-        [field]: field === "stock" ? Number(value) : value,
-      };
-      return {
-        ...prev,
-        languageOptions: updatedLangs,
-      };
-    });
-  };
+	const handleAddLanguageOption = () => {
+		setSelectedBook((prev) => ({
+			...prev,
+			languageOptions: [
+				...(prev?.languageOptions ?? []),
+				{ language: "", stock: 0, buyLink: "", available: true },
+			],
+		}));
+	};
 
-  // Handle target audience updates
-  const handleTargetAudienceChange = (value) => {
-    console.log("Updating target audience:", value);
+	const handleRemoveLanguageOption = (index) => {
+		setSelectedBook((prev) => {
+			const updated = [...(prev?.languageOptions ?? [])];
+			updated.splice(index, 1);
+			return {
+				...prev,
+				languageOptions:
+					updated.length > 0
+						? updated
+						: [{ language: "", stock: 0, buyLink: "", available: true }],
+			};
+		});
+	};
 
-    setSelectedBook((prev) => ({
-      ...prev,
-      targetAudience: value
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t),
-    }));
-  };
+	const handleTargetAudienceChange = (value) => {
+		setSelectedBook((prev) => ({
+			...prev,
+			targetAudience: sanitizeCommaSeparated(value),
+		}));
+	};
 
-  const handleSave = async () => {
-    try {
-      // Clean up the data before sending
-      const bookToSave = {
-        ...selectedBook,
-        price: Number(selectedBook.price) || 0,
-        // Remove MongoDB specific fields that shouldn't be updated
-        // Keep _id for reference but don't send internal fields
-      };
+	const handleCoverFileChange = (event) => {
+		const file = event.target.files?.[0];
+		setCoverFile(file ?? null);
+	};
 
-      // Remove fields that shouldn't be sent to backend
-      delete bookToSave.createdAt;
-      delete bookToSave.updatedAt;
-      delete bookToSave.__v;
-      delete bookToSave.id; // Remove our custom id field
+	const handleModalClose = () => {
+		setIsModalOpen(false);
+		setSelectedBook(null);
+		setCoverFile(null);
+	};
 
-      console.log("Saving book data:", bookToSave);
-      console.log(
-        "API URL:",
-        `${import.meta.env.VITE_BACKEND_URL}/books/${
-          selectedBook._id || selectedBook.id
-        }`
-      );
+	const handleSave = () => {
+		if (!selectedBook) return;
 
-      const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/books/${
-          selectedBook._id || selectedBook.id
-        }`,
-        bookToSave,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+		const bookId = selectedBook._id || selectedBook.id;
+		if (!bookId) return;
 
-      console.log("API Response:", res.data);
+		const payload = {
+			title: selectedBook.title?.trim() ?? "",
+			description: selectedBook.description?.trim() ?? "",
+			price:
+				selectedBook.price === "" || selectedBook.price === null
+					? 0
+					: Number(selectedBook.price) || 0,
+			highlights: {
+				whyThisBook: selectedBook.highlights?.whyThisBook?.trim() ?? "",
+				difference: selectedBook.highlights?.difference?.trim() ?? "",
+				whoCanBuy: selectedBook.highlights?.whoCanBuy?.trim() ?? "",
+			},
+			keyFeatures: (selectedBook.keyFeatures ?? [])
+				.map((feature) => {
+					const sanitized = {
+						feature: feature?.feature?.trim() ?? "",
+					};
+					if (feature?._id) {
+						sanitized._id = feature._id;
+					}
+					return sanitized;
+				})
+				.filter((feature) => feature.feature.length > 0),
+			targetAudience: ensureArray(selectedBook.targetAudience)
+				.map((audience) => `${audience}`.trim())
+				.filter(Boolean),
+			languageOptions: ensureArray(selectedBook.languageOptions)
+				.map((option) => {
+					const sanitized = {
+						language: option?.language?.trim() ?? "",
+						stock:
+							option?.stock === "" || option?.stock === null
+								? 0
+								: Number(option?.stock) || 0,
+						buyLink: option?.buyLink?.trim() ?? "",
+						available:
+							typeof option?.available === "boolean"
+								? option.available
+								: option?.available === "true"
+								? true
+								: option?.available === "false"
+								? false
+								: true,
+					};
+					if (option?._id) {
+						sanitized._id = option._id;
+					}
+					return sanitized;
+				})
+				.filter((option) => option.language.length > 0),
+			coverImage: selectedBook.coverImage ?? "",
+		};
 
-      if (res.data.status) {
-        // Update the books list with the updated book
-        setBooks((prev) =>
-          prev.map((book) =>
-            (book._id || book.id) === (selectedBook._id || selectedBook.id)
-              ? { ...book, ...(res.data.data || bookToSave) }
-              : book
-          )
-        );
-        setIsModalOpen(false);
-        setSelectedBook(null);
-        alert("Book updated successfully!");
-      } else {
-        console.error("API returned unsuccessful status:", res.data);
-        alert(`Failed to update book: ${res.data.message || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Error updating book:", err);
-      console.error("Error response data:", err.response?.data);
-      console.error("Error response status:", err.response?.status);
+		const formData = new FormData();
+		formData.append("payload", JSON.stringify(payload));
+		if (coverFile) {
+			formData.append("file", coverFile);
+		}
 
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Unknown error occurred";
+		updateBookMutation.mutate({
+			bookId,
+			payload: formData,
+		});
+	};
 
-      alert(`Failed to update book: ${errorMessage}`);
-    }
-  };
+	const targetAudienceInputValue = useMemo(() => {
+		if (!selectedBook?.targetAudience?.length) return "";
+		return selectedBook.targetAudience.join(", ");
+	}, [selectedBook?.targetAudience]);
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setSelectedBook(null);
-  };
+	if (isLoading) {
+		return <p className="text-center mt-8 text-gray-600">Loading books...</p>;
+	}
 
-  if (loading) return <p className="text-center mt-8">Loading books...</p>;
-  if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
+	if (isError) {
+		return (
+			<p className="text-center mt-8 text-red-600">
+				Failed to load books. Please try again later.
+			</p>
+		);
+	}
 
-  return (
-    <AdminLayout>
-      {" "}
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="flex items-center justify-between mb-[2rem]">
-          <p className="text-xl font-bold">Books</p>
-          <button
-            onClick={() => navigate("/admin/add-book")}
-            className="flex h-[40px] items-center gap-[.5rem] px-[1rem] py-[2px] rounded-[5px] cursor-pointer text-white bg-gradient-to-b from-[#bf1305] to-[#f64f42]"
-          >
-            <FiPlus size={23} />
-            Add New Book
-          </button>
-        </div>
+	return (
+		<div className="max-w-6xl mx-auto p-4">
+			<div className="flex items-center justify-between mb-8">
+				<p className="text-xl font-bold">Books</p>
+				<button
+					onClick={() => navigate("/admin/add-book")}
+					className="flex h-10 items-center gap-2 px-4 py-1 rounded-md text-white bg-gradient-to-b from-[#bf1305] to-[#f64f42]"
+				>
+					<FiPlus size={22} />
+					Add New Book
+				</button>
+			</div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map((book) => (
-            <div
-              key={book._id || book.id}
-              className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col"
-            >
-              <img
-                src={book.coverImage}
-                alt={book.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">{book.title}</h3>
-                  <p className="text-gray-600 mb-4">{book.description}</p>
-                </div>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="text-red-600 font-bold">₹{book.price}</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(book)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(book._id || book.id)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+			{books.length === 0 ? (
+				<div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
+					No books found. Click “Add New Book” to create one.
+				</div>
+			) : (
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+					{books.map((book) => {
+						const id = book._id || book.id;
+						const isDeleting =
+							deleteBookMutation.isPending && deletingBookId === id;
 
-        {/* Edit Book Modal */}
-        {isModalOpen && selectedBook && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-semibold mb-4">
-                Edit Book (ID: {selectedBook._id || selectedBook.id})
-              </h2>
+						return (
+							<div
+								key={id}
+								className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col"
+							>
+								<img
+									src={book.coverImage}
+									alt={book.title}
+									className="w-full h-48 object-cover"
+								/>
+								<div className="p-4 flex-1 flex flex-col justify-between">
+									<div>
+										<h3 className="text-lg font-semibold mb-2">{book.title}</h3>
+										<p className="text-gray-600 text-sm mb-4 overflow-hidden">
+											{book.description}
+										</p>
+									</div>
 
-              {/* Basic Info */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-blue-600">Basic Information</h3>
+									<div className="flex justify-between items-center mt-auto">
+										<span className="text-red-600 font-bold">
+											₹{book.price}
+										</span>
+										<div className="flex gap-2">
+											<button
+												onClick={() => handleEdit(book)}
+												className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+											>
+												Edit
+											</button>
+											<button
+												onClick={() => handleDelete(id)}
+												disabled={isDeleting}
+												className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-60"
+											>
+												{isDeleting ? "Deleting..." : "Delete"}
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
 
-                <input
-                  type="text"
-                  name="title"
-                  value={selectedBook.title || ""}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Book Title"
-                />
+			{isModalOpen && selectedBook && (
+				<div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+					<div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+						<div className="flex justify-between items-start gap-4 mb-4">
+							<div>
+								<h2 className="text-lg font-semibold">Edit Book</h2>
+								<p className="text-sm text-gray-500">
+									ID: {selectedBook._id || selectedBook.id}
+								</p>
+							</div>
+							<button
+								onClick={handleModalClose}
+								className="text-gray-500 hover:text-gray-700"
+								type="button"
+							>
+								✕
+							</button>
+						</div>
 
-                <textarea
-                  name="description"
-                  value={selectedBook.description || ""}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Book Description"
-                  rows={3}
-                />
+						<div className="space-y-6">
+							<section className="space-y-3">
+								<h3 className="font-medium text-blue-600">Basic Information</h3>
+								<input
+									type="text"
+									name="title"
+									value={selectedBook.title}
+									onChange={handleFieldChange}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Book Title"
+								/>
+								<textarea
+									name="description"
+									value={selectedBook.description}
+									onChange={handleFieldChange}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Book Description"
+									rows={4}
+								/>
+								<input
+									type="number"
+									name="price"
+									value={selectedBook.price}
+									onChange={handleFieldChange}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Price"
+									min={0}
+									step={0.01}
+								/>
 
-                <input
-                  type="number"
-                  name="price"
-                  value={selectedBook.price || ""}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Price"
-                />
+								<div className="space-y-2">
+									<p className="text-sm font-medium text-gray-700">
+										Cover Image
+									</p>
+									{selectedBook.coverImage && (
+										<img
+											src={selectedBook.coverImage}
+											alt={selectedBook.title}
+											className="w-full h-40 object-cover rounded border"
+										/>
+									)}
+									<input
+										type="file"
+										accept="image/*"
+										onChange={handleCoverFileChange}
+										className="block w-full text-sm text-gray-600"
+									/>
+									{coverFile && (
+										<p className="text-xs text-gray-500">
+											Selected file: {coverFile.name}
+										</p>
+									)}
+								</div>
+							</section>
 
-                <input
-                  type="text"
-                  name="coverImage"
-                  value={selectedBook.coverImage || ""}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Cover Image URL"
-                />
-              </div>
+							<section className="space-y-3">
+								<h3 className="font-medium text-blue-600">Highlights</h3>
+								<input
+									type="text"
+									value={selectedBook.highlights?.whyThisBook || ""}
+									onChange={(event) =>
+										handleHighlightChange("whyThisBook", event.target.value)
+									}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Why This Book"
+								/>
+								<input
+									type="text"
+									value={selectedBook.highlights?.difference || ""}
+									onChange={(event) =>
+										handleHighlightChange("difference", event.target.value)
+									}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Difference"
+								/>
+								<input
+									type="text"
+									value={selectedBook.highlights?.whoCanBuy || ""}
+									onChange={(event) =>
+										handleHighlightChange("whoCanBuy", event.target.value)
+									}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Who Can Buy"
+								/>
+							</section>
 
-              {/* Highlights */}
-              <div className="mt-6 space-y-3">
-                <h3 className="font-medium text-blue-600">Highlights</h3>
+							<section className="space-y-3">
+								<div className="flex items-center justify-between">
+									<h3 className="font-medium text-blue-600">Key Features</h3>
+									<button
+										onClick={handleAddKeyFeature}
+										className="text-sm text-blue-600 hover:underline"
+										type="button"
+									>
+										+ Add Feature
+									</button>
+								</div>
+								{selectedBook.keyFeatures?.length ? (
+									selectedBook.keyFeatures.map((feature, index) => (
+										<div key={feature._id || index} className="flex gap-2">
+											<input
+												type="text"
+												value={feature.feature}
+												onChange={(event) =>
+													handleKeyFeatureChange(index, event.target.value)
+												}
+												className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+												placeholder={`Feature ${index + 1}`}
+											/>
+											<button
+												onClick={() => handleRemoveKeyFeature(index)}
+												className="px-3 py-1 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50"
+												type="button"
+											>
+												Remove
+											</button>
+										</div>
+									))
+								) : (
+									<p className="text-gray-500 text-sm">
+										No key features added.
+									</p>
+								)}
+							</section>
 
-                <input
-                  type="text"
-                  value={selectedBook.highlights?.whyThisBook || ""}
-                  onChange={(e) =>
-                    handleHighlightChange("whyThisBook", e.target.value)
-                  }
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Why This Book"
-                />
+							<section className="space-y-3">
+								<h3 className="font-medium text-blue-600">Target Audience</h3>
+								<textarea
+									value={targetAudienceInputValue}
+									onChange={(event) =>
+										handleTargetAudienceChange(event.target.value)
+									}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Enter comma separated audience tags"
+									rows={2}
+								/>
+								<p className="text-xs text-gray-500">
+									Example: Beginners, Professionals, Students
+								</p>
+							</section>
 
-                <input
-                  type="text"
-                  value={selectedBook.highlights?.difference || ""}
-                  onChange={(e) =>
-                    handleHighlightChange("difference", e.target.value)
-                  }
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Difference"
-                />
+							<section className="space-y-3">
+								<div className="flex items-center justify-between">
+									<h3 className="font-medium text-blue-600">
+										Language Options
+									</h3>
+									<button
+										onClick={handleAddLanguageOption}
+										className="text-sm text-blue-600 hover:underline"
+										type="button"
+									>
+										+ Add Language
+									</button>
+								</div>
+								{selectedBook.languageOptions?.length ? (
+									selectedBook.languageOptions.map((option, index) => (
+										<div
+											key={option._id || index}
+											className="rounded border border-gray-200 p-3 space-y-2"
+										>
+											<div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+												<input
+													type="text"
+													value={option.language}
+													onChange={(event) =>
+														handleLanguageOptionChange(
+															index,
+															"language",
+															event.target.value
+														)
+													}
+													className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+													placeholder="Language"
+												/>
+												<input
+													type="number"
+													value={option.stock}
+													min={0}
+													onChange={(event) =>
+														handleLanguageOptionChange(
+															index,
+															"stock",
+															event.target.value
+														)
+													}
+													className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+													placeholder="Stock"
+												/>
+												<input
+													type="text"
+													value={option.buyLink}
+													onChange={(event) =>
+														handleLanguageOptionChange(
+															index,
+															"buyLink",
+															event.target.value
+														)
+													}
+													className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+													placeholder="Buy Link"
+												/>
+											</div>
+											<div className="flex items-center justify-between">
+												<label className="flex items-center gap-2 text-sm text-gray-600">
+													<input
+														type="checkbox"
+														checked={Boolean(option.available)}
+														onChange={(event) =>
+															handleLanguageAvailabilityToggle(
+																index,
+																event.target.checked
+															)
+														}
+													/>
+													Available for purchase
+												</label>
+												<button
+													onClick={() => handleRemoveLanguageOption(index)}
+													className="text-xs text-red-600 hover:underline"
+													type="button"
+												>
+													Remove Language
+												</button>
+											</div>
+										</div>
+									))
+								) : (
+									<p className="text-gray-500 text-sm">
+										No language options configured.
+									</p>
+								)}
+							</section>
+						</div>
 
-                <input
-                  type="text"
-                  value={selectedBook.highlights?.whoCanBuy || ""}
-                  onChange={(e) =>
-                    handleHighlightChange("whoCanBuy", e.target.value)
-                  }
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Who Can Buy"
-                />
-              </div>
-
-              {/* Key Features */}
-              <div className="mt-6 space-y-3">
-                <h3 className="font-medium text-blue-600">Key Features</h3>
-                {selectedBook.keyFeatures &&
-                selectedBook.keyFeatures.length > 0 ? (
-                  selectedBook.keyFeatures.map((feature, idx) => (
-                    <input
-                      key={feature._id || idx}
-                      type="text"
-                      value={feature.feature || ""}
-                      onChange={(e) =>
-                        handleKeyFeatureChange(idx, e.target.value)
-                      }
-                      className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder={`Feature ${idx + 1}`}
-                    />
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    No key features available
-                  </p>
-                )}
-              </div>
-
-              {/* Target Audience */}
-              <div className="mt-6 space-y-3">
-                <h3 className="font-medium text-blue-600">Target Audience</h3>
-                <textarea
-                  value={selectedBook.targetAudience?.join(", ") || ""}
-                  onChange={(e) => handleTargetAudienceChange(e.target.value)}
-                  className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Target Audience (comma separated)"
-                  rows={2}
-                />
-              </div>
-
-              {/* Language Options */}
-              <div className="mt-6 space-y-3">
-                <h3 className="font-medium text-blue-600">Language Options</h3>
-                {selectedBook.languageOptions &&
-                selectedBook.languageOptions.length > 0 ? (
-                  selectedBook.languageOptions.map((lang, idx) => (
-                    <div
-                      key={lang._id || idx}
-                      className="grid grid-cols-3 gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={lang.language || ""}
-                        onChange={(e) =>
-                          handleLanguageOptionChange(
-                            idx,
-                            "language",
-                            e.target.value
-                          )
-                        }
-                        className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Language"
-                      />
-                      <input
-                        type="number"
-                        value={lang.stock || 0}
-                        onChange={(e) =>
-                          handleLanguageOptionChange(
-                            idx,
-                            "stock",
-                            e.target.value
-                          )
-                        }
-                        className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Stock"
-                      />
-                      <input
-                        type="text"
-                        value={lang.buyLink || ""}
-                        onChange={(e) =>
-                          handleLanguageOptionChange(
-                            idx,
-                            "buyLink",
-                            e.target.value
-                          )
-                        }
-                        className="border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Buy Link"
-                      />
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    No language options available
-                  </p>
-                )}
-              </div>
-
-              {/* Modal Actions */}
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-                <button
-                  onClick={handleModalClose}
-                  className="px-6 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-2 text-sm text-white rounded bg-blue-600 hover:bg-blue-700 transition-colors"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </AdminLayout>
-  );
+						<div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+							<button
+								onClick={handleModalClose}
+								className="px-6 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+								type="button"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleSave}
+								disabled={updateBookMutation.isPending}
+								className="px-6 py-2 text-sm text-white rounded bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60"
+								type="button"
+							>
+								{updateBookMutation.isPending ? "Saving..." : "Save Changes"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default BooksList;
