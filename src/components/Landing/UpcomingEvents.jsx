@@ -26,7 +26,7 @@ const UpcomingEvents = () => {
 		if (events.length === 0) return;
 		const interval = setInterval(() => {
 			setCurrent((prev) => (prev + 1) % events.length);
-		}, 1000);
+		}, 3000);
 		return () => clearInterval(interval);
 	}, [events]);
 

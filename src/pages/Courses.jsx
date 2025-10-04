@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Navigate } from "react-router-dom";
 import CourseHeader from "../components/StudentCourses/CourseHeader";
 import CourseContainer from "../components/StudentCourses/CourseContainer";
@@ -8,6 +8,8 @@ import { selectCurrentUser } from "../store/slices/authSlice";
 const Course = () => {
 	const user = useAppSelector(selectCurrentUser);
 	const role = user?.role;
+	const [filter, setFilter] = useState("All");
+	const [searchTerm, setSearchTerm] = useState("");
 
 	// Redirect admin/astrologer to admin dashboard
 	// They should use admin panel for course management
@@ -18,8 +20,8 @@ const Course = () => {
 	// Show student course view
 	return (
 		<>
-			<CourseHeader />
-			<CourseContainer />
+			<CourseHeader onFilterChange={setFilter} onSearchChange={setSearchTerm} />
+			<CourseContainer filter={filter} searchTerm={searchTerm} />
 		</>
 	);
 };

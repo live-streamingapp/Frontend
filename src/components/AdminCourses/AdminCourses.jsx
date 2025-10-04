@@ -78,49 +78,78 @@ function AdminCourses() {
 					Add New Course
 				</button>
 			</div>
-			<section className="mt-8 mx-2.5 sm:ml-[35px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-[35px]">
+			<section className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 				{visibleCourses.map((course) => (
 					<article
 						key={course._id}
-						className="w-full mx-auto border border-[#ECECEC] shadow-md rounded-[15px] pb-3 flex flex-col items-center gap-2"
+						className="flex flex-col shadow-lg border border-gray-200 overflow-hidden rounded-2xl bg-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out"
 					>
-						<img
-							src={course.image || "/images/AstroVastu.png"}
-							alt={course.title}
-							className="block w-full h-[150px] object-cover rounded-t-[15px]"
-						/>
-						<div className="flex flex-col items-start gap-[9px] w-[90%] max-w-[258px] mx-auto">
-							<h3 className="text-[14px] font-semibold pt-1">{course.title}</h3>
-							<p className="text-[12px] font-medium">{course.description}</p>
-							<hr className="w-full border-t border-black" />
-							<footer className="flex justify-between items-center w-full">
-								<span className="text-[14px] font-semibold">
-									₹ {course.price?.toLocaleString() || "0"}
+						{/* Clickable Image */}
+						<div
+							className="cursor-pointer overflow-hidden group"
+							onClick={() => navigate(`/admin/courses/${course._id}`)}
+						>
+							<img
+								src={course.image || "/images/AstroVastu.png"}
+								alt={course.title}
+								className="h-[200px] w-full object-cover transition-transform duration-300 group-hover:scale-110"
+							/>
+						</div>
+
+						{/* Content */}
+						<div className="flex flex-col flex-grow p-4">
+							<h3 className="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
+								{course.title}
+							</h3>
+							<p className="text-gray-600 text-sm mb-4 flex-grow line-clamp-3">
+								{course.description}
+							</p>
+
+							{/* Price Section */}
+							<div className="flex items-center mb-4">
+								<span className="font-bold text-2xl text-gray-900">
+									₹{course.price?.toLocaleString() || "0"}
 								</span>
-								<div className="flex gap-2">
-									<button
-										onClick={() => navigate(`/admin/courses/${course._id}`)}
-										className="text-white bg-[#3B82F6] text-[10px] w-[63px] h-[26px] px-[5px] flex justify-center items-center rounded-md"
-									>
-										View
-									</button>
-									<button
-										onClick={() =>
-											navigate(`/admin/courses/${course._id}/edit`)
-										}
-										className="text-white bg-[#BB0E00] text-[10px] w-[63px] h-[26px] px-[5px] flex justify-center items-center rounded-md"
-									>
-										Edit
-									</button>
-									<button
-										onClick={() => handleDelete(course._id, course.title)}
-										disabled={deleteCourseMutation.isPending}
-										className="text-white bg-[#636363] text-[10px] w-[63px] h-[26px] px-[5px] flex justify-center items-center rounded-md disabled:opacity-60"
-									>
-										{deleteCourseMutation.isPending ? "Deleting" : "Delete"}
-									</button>
-								</div>
-							</footer>
+								{course.originalPrice &&
+									course.originalPrice > course.price && (
+										<>
+											<span className="text-gray-400 line-through text-sm ml-3">
+												₹{course.originalPrice?.toLocaleString()}
+											</span>
+											<span className="ml-auto bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+												{Math.round(
+													((course.originalPrice - course.price) /
+														course.originalPrice) *
+														100
+												)}
+												% OFF
+											</span>
+										</>
+									)}
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex items-center gap-2">
+								<button
+									onClick={() => navigate(`/admin/courses/${course._id}`)}
+									className="flex-1 text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 text-sm font-medium rounded-lg transition-colors shadow-sm"
+								>
+									View
+								</button>
+								<button
+									onClick={() => navigate(`/admin/courses/${course._id}/edit`)}
+									className="flex-1 text-white bg-red-600 hover:bg-red-700 px-3 py-2 text-sm font-medium rounded-lg transition-colors shadow-sm"
+								>
+									Edit
+								</button>
+								<button
+									onClick={() => handleDelete(course._id, course.title)}
+									disabled={deleteCourseMutation.isPending}
+									className="flex-1 text-white bg-gray-600 hover:bg-gray-700 px-3 py-2 text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+								>
+									{deleteCourseMutation.isPending ? "..." : "Delete"}
+								</button>
+							</div>
 						</div>
 					</article>
 				))}

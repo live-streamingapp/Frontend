@@ -1,5 +1,4 @@
 // Order Tracking Page - View and track customer orders
-import SevenMukhiRudraksh from "../../../public/images/SevenMukhiRudraksh.png";
 import { FaCircle } from "react-icons/fa";
 import { PiLineVertical } from "react-icons/pi";
 import { GoGlobe } from "react-icons/go";
@@ -186,7 +185,7 @@ export default function OrderTracking({ order }) {
 								</div>
 								<div className="flex items-center justify-center sm:justify-start gap-1 text-xs text-gray-600 mt-1">
 									<img
-										src={SevenMukhiRudraksh}
+										src="/images/SevenMukhiRudraksh.png"
 										alt="star"
 										className="w-3 h-3 flex-shrink-0"
 									/>

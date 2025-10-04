@@ -124,25 +124,49 @@ const Cart = () => {
 	const CartItem = ({ item }) => {
 		const key = item.cartItemId ?? item.id ?? item.productId;
 		const favorited = favoriteMap[key] ?? false;
+		const imageUrl =
+			item.imageUrl || item.image || "/images/default-product.png";
+		const isCourse = item.kind === "Course";
+
 		return (
 			<div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-3">
-				<div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-					<div className="w-12 h-12 bg-orange-800 rounded-full relative overflow-hidden">
-						<div className="absolute inset-1 bg-orange-600 rounded-full">
-							<div className="absolute inset-1 bg-orange-500 rounded-full flex items-center justify-center">
-								<div className="w-2 h-2 bg-orange-300 rounded-full"></div>
-							</div>
-						</div>
-					</div>
+				<div className="w-20 h-20 bg-white rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+					<img
+						src={imageUrl}
+						alt={item.name}
+						className="w-full h-full object-contain"
+					/>
 				</div>
 
 				<div className="flex-1">
-					<h3 className="font-medium text-gray-800">{item.name}</h3>
+					<div className="flex items-center gap-2">
+						<h3 className="font-medium text-gray-800">{item.name}</h3>
+						{isCourse && (
+							<span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+								Course
+							</span>
+						)}
+						{item.kind === "Product" && (
+							<span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+								Product
+							</span>
+						)}
+					</div>
 					<div className="flex items-center gap-2 mt-1">
 						<span className="text-red-600 font-semibold">
 							₹{Number(item.price ?? 0).toLocaleString()}
 						</span>
+						{item.oldPrice && item.oldPrice > item.price && (
+							<span className="text-gray-400 line-through text-sm">
+								₹{Number(item.oldPrice).toLocaleString()}
+							</span>
+						)}
 					</div>
+					{item.description && (
+						<p className="text-xs text-gray-500 mt-1 line-clamp-1">
+							{item.description}
+						</p>
+					)}
 				</div>
 
 				<button onClick={() => toggleFavorite(item)} className="p-1">
@@ -156,36 +180,47 @@ const Cart = () => {
 		);
 	};
 
-	const QuantityControls = ({ item }) => (
-		<div className="flex items-center gap-4 px-4 pb-4">
-			<div className="flex items-center gap-3">
+	const QuantityControls = ({ item }) => {
+		const isCourse = item.kind === "Course";
+
+		return (
+			<div className="flex items-center gap-4 px-4 pb-4">
+				{!isCourse && (
+					<div className="flex items-center gap-3">
+						<button
+							onClick={() => handleQuantityChange(item, -1)}
+							disabled={isMutating}
+							className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<FaMinus className="w-4 h-4" />
+						</button>
+						<span className="font-medium min-w-[20px] text-center">
+							{item.quantity}
+						</span>
+						<button
+							onClick={() => handleQuantityChange(item, 1)}
+							disabled={isMutating}
+							className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<FaPlus className="w-4 h-4" />
+						</button>
+					</div>
+				)}
+				{isCourse && (
+					<span className="text-sm text-gray-600 italic">
+						Quantity: 1 (Course enrollment)
+					</span>
+				)}
 				<button
-					onClick={() => handleQuantityChange(item, -1)}
+					onClick={() => handleRemove(item)}
 					disabled={isMutating}
-					className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+					className="text-gray-500 hover:text-red-500 text-sm ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					<FaMinus className="w-4 h-4" />
-				</button>
-				<span className="font-medium min-w-[20px] text-center">
-					{item.quantity}
-				</span>
-				<button
-					onClick={() => handleQuantityChange(item, 1)}
-					disabled={isMutating}
-					className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					<FaPlus className="w-4 h-4" />
+					Remove
 				</button>
 			</div>
-			<button
-				onClick={() => handleRemove(item)}
-				disabled={isMutating}
-				className="text-gray-500 hover:text-red-500 text-sm ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				Remove
-			</button>
-		</div>
-	);
+		);
+	};
 
 	return (
 		<div className="max-w-6xl mx-auto p-4">

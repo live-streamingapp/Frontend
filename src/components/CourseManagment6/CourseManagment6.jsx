@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Girl from "../../../public/images/Girl.png";
 import StatusSection from "./StatusSection";
 import { PiStarOfDavid } from "react-icons/pi";
 import { IoMdStar } from "react-icons/io";
@@ -514,7 +513,7 @@ function BookingCard({
 				<div className="flex w-[320px] justify-between items-start">
 					{/* Customer Image & ID */}
 					<div className="flex w-[112px] h-[89px] flex-col justify-between items-center shrink-0">
-						<img src={Girl} width={66} height={66} alt="Customer" />
+						<img src="/images/Girl.png" width={66} height={66} alt="Customer" />
 						<p className="text-[11px] font-[510] leading-[14px] text-[rgba(0,0,0,0.69)]">
 							{customerId}
 						</p>

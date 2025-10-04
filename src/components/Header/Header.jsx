@@ -17,6 +17,7 @@ import {
 	useNotificationsQuery,
 	useMarkAsReadMutation,
 } from "../../hooks/useNotificationsApi";
+import { useCartQuery } from "../../hooks/useCartApi";
 import { PiShoppingCartFill } from "react-icons/pi";
 import { MdDashboard, MdKey } from "react-icons/md";
 import Dropdown from "./Dropdown";
@@ -89,6 +90,7 @@ const Header = () => {
 	const isAuthenticated = useAppSelector(selectIsAuthenticated);
 	const notificationRef = useRef(null);
 	const profileRef = useRef(null);
+	const mobileMenuRef = useRef(null);
 
 	const toggleMobileMenu = () => {
 		setMobileMenuOpen(!mobileMenuOpen);
@@ -111,6 +113,7 @@ const Header = () => {
 
 	useClickOutside(profileRef, () => setShowProfile(false));
 	useClickOutside(notificationRef, () => setShowNotification(false));
+	useClickOutside(mobileMenuRef, () => setMobileMenuOpen(false));
 
 	// Define userData first before using it
 	const userData = currentUser ?? fetchedUser;
@@ -126,6 +129,12 @@ const Header = () => {
 	const unreadCount = notificationsData?.unreadCount ?? 0;
 
 	const markAsReadMutation = useMarkAsReadMutation();
+
+	// Fetch cart items count
+	const { data: cartData } = useCartQuery({
+		enabled: Boolean(userData?._id) && isAuthenticated,
+	});
+	const cartItemsCount = cartData?.items?.length ?? 0;
 
 	const handleNotificationClick = (notificationId) => {
 		if (notificationId) {
@@ -202,65 +211,67 @@ const Header = () => {
 								{/* Right Icons */}
 								<div className="flex items-center gap-2 sm:gap-3">
 									{/* Notification Section */}
-									<div ref={notificationRef} className="max-[1100px]:hidden">
-										<button
-											className="relative cursor-pointer flex items-center justify-center bg-white border border-gray-200 h-[40px] w-[40px] sm:h-[45px] sm:w-[45px] rounded-full"
-											onClick={() => setShowNotification((prev) => !prev)}
-										>
-											<FaBell className="text-gray-700 text-base sm:text-lg" />
-										</button>
+									{isAuthenticated && (
+										<div ref={notificationRef} className="max-[1100px]:hidden">
+											<button
+												className="relative cursor-pointer flex items-center justify-center bg-white border border-gray-200 h-[40px] w-[40px] sm:h-[45px] sm:w-[45px] rounded-full"
+												onClick={() => setShowNotification((prev) => !prev)}
+											>
+												<FaBell className="text-gray-700 text-base sm:text-lg" />
+											</button>
 
-										<div
-											className={`absolute top-[90%] right-[10%] w-[280px] sm:w-[320px] bg-white shadow-xl px-2 py-3 sm:px-[8px] sm:py-[16px] rounded-lg border border-gray-200 overflow-hidden transition-all duration-500 ease-in-out ${
-												showNotification
-													? "max-h-[400px] opacity-100"
-													: "max-h-0 opacity-0"
-											}`}
-										>
-											<h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-[5px] px-2 flex justify-between items-center">
-												Notifications
-												{unreadCount > 0 && (
-													<span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-														{unreadCount}
-													</span>
-												)}
-											</h3>
-											<ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto thin-scrollbar">
-												{notifications.length === 0 ? (
-													<li className="px-2 py-4 text-center text-sm text-gray-500">
-														No notifications
-													</li>
-												) : (
-													notifications.map((note) => (
-														<li key={note._id} className="">
-															<Link
-																to={note.path || "#"}
-																onClick={() =>
-																	handleNotificationClick(note._id)
-																}
-																className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
-															>
-																<div className="flex justify-between items-start">
-																	<p className="text-sm font-medium text-gray-800">
-																		{note.title}
-																	</p>
-																	{!note.isRead && (
-																		<span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
-																	)}
-																</div>
-																<p className="text-xs text-gray-600">
-																	{note.message}
-																</p>
-																<p className="text-[10px] text-gray-400 mt-1">
-																	{new Date(note.createdAt).toLocaleString()}
-																</p>
-															</Link>
+											<div
+												className={`absolute top-[90%] right-[10%] w-[280px] sm:w-[320px] bg-white shadow-xl px-2 py-3 sm:px-[8px] sm:py-[16px] rounded-lg border border-gray-200 overflow-hidden transition-all duration-500 ease-in-out ${
+													showNotification
+														? "max-h-[400px] opacity-100"
+														: "max-h-0 opacity-0"
+												}`}
+											>
+												<h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-[5px] px-2 flex justify-between items-center">
+													Notifications
+													{unreadCount > 0 && (
+														<span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+															{unreadCount}
+														</span>
+													)}
+												</h3>
+												<ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto thin-scrollbar">
+													{notifications.length === 0 ? (
+														<li className="px-2 py-4 text-center text-sm text-gray-500">
+															No notifications
 														</li>
-													))
-												)}
-											</ul>
+													) : (
+														notifications.map((note) => (
+															<li key={note._id} className="">
+																<Link
+																	to={note.path || "#"}
+																	onClick={() =>
+																		handleNotificationClick(note._id)
+																	}
+																	className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
+																>
+																	<div className="flex justify-between items-start">
+																		<p className="text-sm font-medium text-gray-800">
+																			{note.title}
+																		</p>
+																		{!note.isRead && (
+																			<span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+																		)}
+																	</div>
+																	<p className="text-xs text-gray-600">
+																		{note.message}
+																	</p>
+																	<p className="text-[10px] text-gray-400 mt-1">
+																		{new Date(note.createdAt).toLocaleString()}
+																	</p>
+																</Link>
+															</li>
+														))
+													)}
+												</ul>
+											</div>
 										</div>
-									</div>
+									)}
 
 									{/* AUTHENTICATION OPTIONS - Conditionally render based on auth status */}
 									{!isAuthenticated ? (
@@ -288,6 +299,11 @@ const Header = () => {
 													size={20}
 													className="sm:text-[22px]"
 												/>
+												{cartItemsCount > 0 && (
+													<span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+														{cartItemsCount > 9 ? "9+" : cartItemsCount}
+													</span>
+												)}
 											</button>
 										</div>
 									)}
@@ -342,7 +358,17 @@ const Header = () => {
 																	className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 transition-colors text-sm text-gray-800"
 																	onClick={() => setShowProfile(false)}
 																>
-																	<span>{item.icon}</span>
+																	<span className="relative">
+																		{item.icon}
+																		{item.label === "Cart" &&
+																			cartItemsCount > 0 && (
+																				<span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+																					{cartItemsCount > 9
+																						? "9+"
+																						: cartItemsCount}
+																				</span>
+																			)}
+																	</span>
 																	<span>{item.label}</span>
 																</Link>
 															)}
@@ -370,6 +396,7 @@ const Header = () => {
 
 						{/* Mobile Menu */}
 						<div
+							ref={mobileMenuRef}
 							className={`absolute bg-[#fbfbfb] w-full left-0 px-3 sm:px-4 pb-2 sm:pb-3 shadow-sm overflow-hidden transition-all duration-500 ease-in-out ${
 								mobileMenuOpen
 									? "max-h-[450px] opacity-100"
@@ -380,6 +407,7 @@ const Header = () => {
 								isAuthenticated={isAuthenticated}
 								userData={userData}
 								onLogout={handleLogout}
+								onClose={() => setMobileMenuOpen(false)}
 							/>
 						</div>
 					</nav>

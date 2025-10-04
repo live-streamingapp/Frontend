@@ -59,23 +59,27 @@ const getPageTitle = (pathname) => {
 const AdminLayout = () => {
 	const location = useLocation();
 	const [showNotification, setShowNotification] = useState(false);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const notificationRef = useRef(null);
 
 	const pageTitle = getPageTitle(location.pathname);
 
 	return (
-		<div className="flex min-h-screen bg-[#FCFCFC]">
-			<div className="sticky left-0 top-0 h-screen overflow-hidden">
-				<Sidebar />
-			</div>
-			<div className="flex flex-col min-w-0">
-				<Topbar
-					pageTitle={pageTitle}
-					showNotification={showNotification}
-					setShowNotification={setShowNotification}
-					notificationRef={notificationRef}
-				/>
-				<main className="p-4 md:p-6 flex-1 overflow-x-hidden">
+		<div className="flex flex-col h-screen bg-[#FCFCFC] overflow-hidden">
+			{/* Top bar - Full width, fixed height */}
+			<Topbar
+				pageTitle={pageTitle}
+				showNotification={showNotification}
+				setShowNotification={setShowNotification}
+				notificationRef={notificationRef}
+				sidebarOpen={sidebarOpen}
+				setSidebarOpen={setSidebarOpen}
+			/>
+
+			{/* Sidebar and Main Content Side by Side */}
+			<div className="flex flex-1 overflow-hidden">
+				<Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+				<main className="flex-1 p-4 md:p-6 overflow-y-auto">
 					<Outlet />
 				</main>
 			</div>

@@ -100,6 +100,45 @@ export const useBookQuery = (bookId, options = {}) => {
 	});
 };
 
+export const useBlogQuery = (blogId, options = {}) => {
+	const {
+		onError,
+		queryKey = ["blogs", blogId],
+		select,
+		enabled = true,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		enabled: Boolean(blogId) && enabled,
+		queryFn: async () => {
+			const response = await apiClient.get(`/blogs/${blogId}`);
+			const blog = response.data?.data ?? null;
+			if (!blog) return null;
+			return {
+				...blog,
+				mainImage: buildMediaUrl(blog.mainImage),
+				sections: blog.sections?.map((section) => ({
+					...section,
+					images: section.images?.map((img) => buildMediaUrl(img)),
+				})),
+			};
+		},
+		onError: (error) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to load blog details. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		staleTime: 1000 * 60,
+		...queryOptions,
+	});
+};
+
 export const usePodcastsQuery = (options = {}) => {
 	const { queryKey = ["podcasts"], onError, select, ...queryOptions } = options;
 

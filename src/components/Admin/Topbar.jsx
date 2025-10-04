@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { FaBell } from "react-icons/fa6";
+import { FaBell, FaBars } from "react-icons/fa6";
 import { FaUserCircle } from "react-icons/fa";
 import Cookies from "js-cookie";
 import { ADMIN_HIDE_GREETING_PATHS } from "../../utils/constants";
@@ -17,6 +17,8 @@ const Topbar = ({
 	showNotification,
 	setShowNotification,
 	notificationRef,
+	sidebarOpen,
+	setSidebarOpen,
 }) => {
 	const location = useLocation();
 	const dispatch = useAppDispatch();
@@ -72,30 +74,46 @@ const Topbar = ({
 
 	return (
 		<div
-			className="flex justify-between items-center px-4 sm:px-6 border-b border-[#ddd] sticky left-0 top-0 z-[10] shadow-sm"
+			className="flex justify-between items-center px-4 sm:px-6 border-b border-[#ddd] sticky left-0 top-0 z-[10] shadow-sm bg-[#FBFBFB] w-full"
 			style={{
-				backgroundColor: "#FBFBFB",
-				width: "1123px",
 				height: "106px",
 			}}
 		>
-			{/* Conditionally render greeting or page title */}
-			{!shouldHideGreeting ? (
-				<div className="flex flex-col leading-tight">
-					<span className="text-[#666] whitespace-nowrap text-[16px]">
-						Welcome !
-					</span>
-					<span className="font-bold text-[#333] whitespace-nowrap text-[16px]">
-						{currentUser?.name || currentUser?.role || "Admin"}
-					</span>
-				</div>
-			) : (
-				<div className="flex items-center">
-					<h1 className="text-2xl font-bold text-gray-800">
-						{pageTitle || "Admin Panel"}
-					</h1>
-				</div>
-			)}
+			{/* Left Section: Hamburger + Logo + Greeting/Title */}
+			<div className="flex items-center gap-4">
+				{/* Hamburger Menu for Mobile */}
+				<button
+					onClick={() => setSidebarOpen(!sidebarOpen)}
+					className="md:hidden text-gray-700 text-2xl"
+				>
+					<FaBars />
+				</button>
+
+				{/* Logo - visible on small screens */}
+				<img
+					src="/images/vastu-logo.png"
+					alt="Vastu Abhishek"
+					className="h-10 w-auto "
+				/>
+
+				{/* Conditionally render greeting or page title */}
+				{!shouldHideGreeting ? (
+					<div className="flex flex-col leading-tight">
+						<span className="text-[#666] whitespace-nowrap text-[16px]">
+							Welcome !
+						</span>
+						<span className="font-bold text-[#333] whitespace-nowrap text-[16px]">
+							{currentUser?.name || currentUser?.role || "Admin"}
+						</span>
+					</div>
+				) : (
+					<div className="flex items-center">
+						<h1 className="text-2xl font-bold text-gray-800">
+							{pageTitle || "Admin Panel"}
+						</h1>
+					</div>
+				)}
+			</div>
 
 			<div className="flex items-center gap-4 w-full justify-end">
 				{/* Notification Section */}

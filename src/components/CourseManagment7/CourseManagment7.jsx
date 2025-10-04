@@ -1,4 +1,3 @@
-import Aditi from "../../../public/images/aditi_sharma.png";
 import { IoCalendarClearOutline } from "react-icons/io5";
 import { FiGlobe } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
@@ -12,7 +11,7 @@ function CourseCard({ name, date, topic, language }) {
 			{/* Left Image */}
 			<div className="flex-shrink-0 w-[105px] min-w-[80px] self-stretch">
 				<img
-					src={Aditi}
+					src="/images/aditi_sharma.png"
 					className="h-full w-full rounded-l-[15px] object-cover"
 					alt={name}
 				/>

@@ -3,7 +3,7 @@ import CourseCard from "./CourseCard"; // import new card
 import LoadingOverlay from "../common/LoadingOverlay";
 import { useCoursesQuery } from "../../hooks/useCoursesApi";
 
-const CourseContainer = () => {
+const CourseContainer = ({ filter = "All", searchTerm = "" }) => {
 	const [visibleCount, setVisibleCount] = useState(8);
 	const {
 		data: coursesData,
@@ -12,7 +12,32 @@ const CourseContainer = () => {
 		isError,
 		error,
 	} = useCoursesQuery({ enableToast: false });
-	const courses = useMemo(() => coursesData ?? [], [coursesData]);
+
+	// Filter and search courses
+	const courses = useMemo(() => {
+		let filtered = coursesData ?? [];
+
+		// Apply category filter
+		if (filter && filter !== "All") {
+			filtered = filtered.filter(
+				(course) => course.category?.toLowerCase() === filter.toLowerCase()
+			);
+		}
+
+		// Apply search filter
+		if (searchTerm) {
+			const searchLower = searchTerm.toLowerCase();
+			filtered = filtered.filter(
+				(course) =>
+					course.title?.toLowerCase().includes(searchLower) ||
+					course.description?.toLowerCase().includes(searchLower) ||
+					course.category?.toLowerCase().includes(searchLower)
+			);
+		}
+
+		return filtered;
+	}, [coursesData, filter, searchTerm]);
+
 	const hasCourses = courses.length > 0;
 	const showOverlay = isFetching && !isLoading && hasCourses;
 
@@ -32,6 +57,20 @@ const CourseContainer = () => {
 		return (
 			<div className="flex justify-center items-center min-h-[60vh]">
 				<p className="text-red-600">{message}</p>
+			</div>
+		);
+	}
+
+	if (!hasCourses && !isLoading) {
+		return (
+			<div className="flex justify-center items-center min-h-[60vh]">
+				<p className="text-gray-600">
+					{searchTerm
+						? `No courses found matching "${searchTerm}"`
+						: filter !== "All"
+						? `No courses found in category "${filter}"`
+						: "No courses available at the moment."}
+				</p>
 			</div>
 		);
 	}

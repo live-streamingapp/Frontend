@@ -1,4 +1,3 @@
-import Girl from "../../../public/images/Girl.png";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import LowerPart from "./LowerPart";
 
@@ -12,10 +11,17 @@ function StudentProgressTracking() {
 					{/* Profile row */}
 					<div className="inline-flex items-center gap-[15px]">
 						<div className="rounded-full overflow-hidden">
-							<img src={Girl} width={74} height={74} alt="Student" />
+							<img
+								src="/images/Girl.png"
+								width={74}
+								height={74}
+								alt="Student"
+							/>
 						</div>
 						<div>
-							<p className="font-[590] text-[16px] font-sans">Aditi R. Sharma</p>
+							<p className="font-[590] text-[16px] font-sans">
+								Aditi R. Sharma
+							</p>
 							<p className="font-[510] text-[11px] leading-[14px] font-sans">
 								ID: STU-2025-0378
 							</p>
@@ -42,10 +48,17 @@ function StudentProgressTracking() {
 					{/* Profile row */}
 					<div className="inline-flex items-center gap-[15px]">
 						<div className="rounded-full overflow-hidden">
-							<img src={Girl} width={74} height={74} alt="Student" />
+							<img
+								src="/images/Girl.png"
+								width={74}
+								height={74}
+								alt="Student"
+							/>
 						</div>
 						<div>
-							<p className="font-[590] text-[16px] font-sans">Aditi R. Sharma</p>
+							<p className="font-[590] text-[16px] font-sans">
+								Aditi R. Sharma
+							</p>
 							<p className="font-[510] text-[11px] leading-[14px] font-sans">
 								ID: STU-2025-0378
 							</p>

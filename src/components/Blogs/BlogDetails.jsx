@@ -2,30 +2,29 @@ import { useParams } from "react-router-dom";
 import { LuDownload } from "react-icons/lu";
 import { RiShareFill } from "react-icons/ri";
 import { GoDotFill } from "react-icons/go";
-import { useEffect } from "react";
-import axios from "axios";
-import { useState } from "react";
+import { useBlogQuery } from "../../hooks/useContentApi";
 
 const BlogDetails = () => {
 	const { id } = useParams();
-	// const blog = blogData.find((blog) => String(blog.id) === String(id));
-	const [blog, setBlog] = useState(null);
+	const { data: blog, isLoading, isError } = useBlogQuery(id);
 
-	useEffect(() => {
-		const fetchBlogDetails = async () => {
-			const res = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/blogs/${id}`,
-				{ withCredentials: true }
-			);
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center py-20">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+			</div>
+		);
+	}
 
-			console.log("blog", res.data.data);
-			setBlog(res.data.data);
-		};
-
-		fetchBlogDetails();
-	}, [id]);
-
-	if (!blog) return <p className="text-center py-10">Blog not found</p>;
+	if (isError || !blog) {
+		return (
+			<div className="max-w-4xl mx-auto px-6 py-10">
+				<p className="text-center text-gray-600">
+					Blog not found or failed to load.
+				</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="max-w-4xl mx-auto px-6 py-10">
@@ -55,7 +54,7 @@ const BlogDetails = () => {
 			{/* Main Image */}
 			<div className="mt-6 rounded-xl overflow-hidden shadow">
 				<img
-					src={blog.mainImage}
+					src={blog.mainImage || "/images/course.png"}
 					alt={blog.title}
 					className="w-full h-[350px] object-cover"
 				/>

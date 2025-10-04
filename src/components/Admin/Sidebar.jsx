@@ -163,9 +163,7 @@ const menuItems = [
 	},
 ];
 
-const Sidebar = () => {
-	const [collapsed, setCollapsed] = useState(false);
-	const [sidebarOpen, setSidebarOpen] = useState(false);
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 	const [openMenus, setOpenMenus] = useState({});
 
 	const navClass = ({ isActive }) =>
@@ -186,34 +184,29 @@ const Sidebar = () => {
 	};
 
 	return (
-		<div className="flex h-full">
+		<>
+			{/* Overlay for mobile - only visible when sidebar is open */}
+			{sidebarOpen && (
+				<div
+					onClick={() => setSidebarOpen(false)}
+					className="fixed inset-0 bg-gray-400/40 z-40 md:hidden transition-opacity duration-300"
+				></div>
+			)}
+
 			{/* Sidebar */}
 			<aside
-				className={`fixed md:static top-0 left-0 h-screen bg-white border-r border-gray-200 
-          transition-all duration-300 z-50 flex flex-col
-          ${collapsed ? "w-[60px]" : "w-[250px]"}
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-          md:translate-x-0`}
+				className={`fixed md:static top-0 left-0 h-full bg-white border-r border-gray-200 
+          transition-all duration-300 flex flex-col w-[250px]
+          ${sidebarOpen ? "translate-x-0 z-50" : "-translate-x-full -z-10"} 
+          md:translate-x-0 md:z-auto`}
 			>
-				{/* Logo */}
-				<div className="flex flex-col items-center mb-4 pt-4 px-2 flex-shrink-0">
-					<img
-						src="/images/vastu-logo.png"
-						alt="Vastu Abhishek"
-						className={`${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
-					/>
-					<button
-						onClick={() => setCollapsed(!collapsed)}
-						className="hidden md:flex flex-col items-center mt-3 space-y-1 text-gray-700"
-					>
-						<span className="block w-6 h-0.5 bg-gray-700"></span>
-						<span className="block w-6 h-0.5 bg-gray-700"></span>
-						<span className="block w-6 h-0.5 bg-gray-700"></span>
-					</button>
-				</div>
-
+				<img
+					src="/images/vastu-logo.png"
+					alt="Vastu Abhishek"
+					className="h-22 w-auto md:hidden object-contain mx-auto my-2"
+				/>
 				{/* Menu - Scrollable */}
-				<nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+				<nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pt-4 md:pt-0">
 					<ul className="list-none p-0 m-0 space-y-1 px-2 pb-4">
 						{menuItems.map((item) => (
 							<li key={item.title}>
@@ -224,14 +217,12 @@ const Sidebar = () => {
 											className={dropdownClass}
 										>
 											{item.icon}
-											{!collapsed && item.title}
-											{!collapsed && (
-												<span className="ml-auto text-xs">
-													{openMenus[item.title] ? "▲" : "▼"}
-												</span>
-											)}
+											{item.title}
+											<span className="ml-auto text-xs">
+												{openMenus[item.title] ? "▲" : "▼"}
+											</span>
 										</div>
-										{openMenus[item.title] && !collapsed && (
+										{openMenus[item.title] && (
 											<ul className="pl-6 space-y-1">
 												{item.children.map((child) => (
 													<li key={child.title}>
@@ -245,7 +236,7 @@ const Sidebar = () => {
 									</>
 								) : (
 									<NavLink to={item.path} className={navClass}>
-										{item.icon} {!collapsed && item.title}
+										{item.icon} {item.title}
 									</NavLink>
 								)}
 							</li>
@@ -253,33 +244,7 @@ const Sidebar = () => {
 					</ul>
 				</nav>
 			</aside>
-
-			{/* Main Content */}
-			<div className="flex-1">
-				{/* Top bar for mobile */}
-				<div className="md:hidden flex items-center justify-between bg-white p-4 shadow sticky top-0 z-40">
-					<img
-						src="/images/vastu-logo.png"
-						alt="Vastu Abhishek"
-						className="h-10 w-auto"
-					/>
-					<button onClick={() => setSidebarOpen(true)}>
-						<FaBars className="text-2xl text-gray-700" />
-					</button>
-				</div>
-
-				{/* Page Content */}
-				<div className="p-4">{/* Your page content goes here */}</div>
-			</div>
-
-			{/* Mobile overlay */}
-			{sidebarOpen && (
-				<div
-					onClick={() => setSidebarOpen(false)}
-					className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
-				></div>
-			)}
-		</div>
+		</>
 	);
 };
 
