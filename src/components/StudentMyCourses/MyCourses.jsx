@@ -1,18 +1,29 @@
 import React from "react";
 import { BsPlayFill } from "react-icons/bs";
-import { courses } from "../../utils/constants";
+import { useEnrolledCoursesQuery } from "../../hooks/useEnrolledCoursesApi";
 
 const MyCourses = () => {
+	const { data: enrolledCourses = [], isLoading } = useEnrolledCoursesQuery();
+
+	if (isLoading) {
+		return (
+			<div className="mx-[1.5rem] my-[1.5rem]">
+				<h2 className="font-semibold text-[1.25rem]">My Courses</h2>
+				<p className="mt-4">Loading courses...</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className="mx-[1.5rem] my-[1.5rem]">
 			<h2 className="font-semibold text-[1.25rem]">My Courses</h2>
 
 			<div className="py-[1rem] flex flex-col gap-4">
-				{courses.slice(0, 5).map((course) => {
+				{enrolledCourses.slice(0, 5).map((course) => {
 					const isCompleted = course.progress === 100;
 					return (
 						<div
-							key={course.id}
+							key={course._id}
 							className="flex gap-2 items-center justify-between bg-white min-shadow rounded-xl p-4 w-full"
 						>
 							{/* Left Section */}

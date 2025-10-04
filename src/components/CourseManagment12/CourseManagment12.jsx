@@ -1,34 +1,33 @@
+// Vastu Services Page - Display vastu services information and features
 import FeatureOverview from "./FeatureOverview";
-import Header from "./Header";
-import VastuAbhishekCard from "./VastuAbhishekCard"
-import ContactCard from "./ContactCard"
+import VastuAbhishekCard from "./VastuAbhishekCard";
+import ContactCard from "./ContactCard";
 import FAQSection from "./FAQSection";
-import PrivacyPolicyPage from "./PrivacyPolicyPage"
+import PrivacyPolicyPage from "./PrivacyPolicyPage";
 import BottomPart from "./Bottompart";
-import Layout from "../Admin/Layout";
-function CourseManagment12(){
 
-return(
-    <>
-      <Header/>
-     
-      <FeatureOverview/>
-       <br/>
-      <VastuAbhishekCard/>
+function VastuServicesPage() {
+	return (
+		<>
+			<FeatureOverview />
 
-       <br/>
-      <ContactCard/>
-       <br/>
-      
-       <FAQSection/>
-       <br/>
+			<FeatureOverview />
+			<br />
+			<VastuAbhishekCard />
 
-       <PrivacyPolicyPage/>
-       <br/>
+			<br />
+			<ContactCard />
+			<br />
 
-       <BottomPart/>
-    </>
-)
+			<FAQSection />
+			<br />
+
+			<PrivacyPolicyPage />
+			<br />
+
+			<BottomPart />
+		</>
+	);
 }
 
-export default CourseManagment12
+export default VastuServicesPage;

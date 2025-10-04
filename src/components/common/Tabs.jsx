@@ -1,40 +1,46 @@
 // src/components/common/Tabs.jsx
 import React from "react";
-import GradientButton from "./GradientButton";
 
-export default function Tabs({ value, onChange }) {
-  const base =
-    "px-4 py-2.5 rounded-md text-sm font-medium transition border border-gray-200";
-  const inactive = "bg-white text-gray-700 hover:bg-gray-50";
-  // Active for customer list must be gradient
-  return (
-    <div className="flex flex-wrap gap-2">
-      {value === "list" ? (
-        <GradientButton className="!border-none" onClick={() => onChange("list")}>
-          Customers List
-        </GradientButton>
-      ) : (
-        <button
-          onClick={() => onChange("list")}
-          className={`${base} ${inactive}`}
-        >
-          Customers List
-        </button>
-      )}
+export default function Tabs({ tabs, activeTab, onTabChange }) {
+	if (!tabs || tabs.length === 0) {
+		return null;
+	}
 
-      <button
-        onClick={() => onChange("orders")}
-        className={`${base} ${value === "orders" ? "bg-gray-900 text-white" : inactive}`}
-      >
-        Orders &amp; Purchase History
-      </button>
-
-      <button
-        onClick={() => onChange("events")}
-        className={`${base} ${value === "events" ? "bg-gray-900 text-white" : inactive}`}
-      >
-        Event Bookings
-      </button>
-    </div>
-  );
+	return (
+		<div className="flex flex-wrap gap-3">
+			{tabs.map((tab) => {
+				const isActive = activeTab === tab.key;
+				return (
+					<button
+						key={tab.key}
+						type="button"
+						onClick={() => onTabChange(tab.key)}
+						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
+							isActive
+								? "text-white"
+								: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+						}`}
+						style={
+							isActive
+								? {
+										background: "linear-gradient(to right, #BB0E00, #B94400)",
+								  }
+								: undefined
+						}
+					>
+						<span>{tab.label}</span>
+						{tab.badge !== undefined && (
+							<span
+								className={`rounded-full px-2 py-0.5 text-xs ${
+									isActive ? "bg-white/20 text-white" : "bg-white text-gray-900"
+								}`}
+							>
+								{tab.badge}
+							</span>
+						)}
+					</button>
+				);
+			})}
+		</div>
+	);
 }

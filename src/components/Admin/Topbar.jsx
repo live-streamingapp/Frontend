@@ -7,12 +7,16 @@ import { ADMIN_HIDE_GREETING_PATHS } from "../../utils/constants";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout, selectCurrentUser } from "../../store/slices/authSlice";
 import apiClient from "../../utils/apiClient";
+import {
+	useNotificationsQuery,
+	useMarkAsReadMutation,
+} from "../../hooks/useNotificationsApi";
 
 const Topbar = ({
+	pageTitle,
 	showNotification,
 	setShowNotification,
 	notificationRef,
-	notifications,
 }) => {
 	const location = useLocation();
 	const dispatch = useAppDispatch();
@@ -23,6 +27,24 @@ const Topbar = ({
 	const shouldHideGreeting = ADMIN_HIDE_GREETING_PATHS.some((path) =>
 		location.pathname.startsWith(path)
 	);
+
+	// Fetch notifications for the admin user
+	const { data: notificationsData } = useNotificationsQuery({
+		userId: currentUser?._id,
+		limit: 10,
+		enabled: Boolean(currentUser?._id),
+	});
+
+	const notifications = notificationsData?.notifications ?? [];
+	const unreadCount = notificationsData?.unreadCount ?? 0;
+
+	const markAsReadMutation = useMarkAsReadMutation();
+
+	const handleNotificationClick = (notificationId) => {
+		if (notificationId) {
+			markAsReadMutation.mutate(notificationId);
+		}
+	};
 
 	// Close profile dropdown when clicking outside
 	useEffect(() => {
@@ -57,7 +79,7 @@ const Topbar = ({
 				height: "106px",
 			}}
 		>
-			{/* Conditionally render greeting */}
+			{/* Conditionally render greeting or page title */}
 			{!shouldHideGreeting ? (
 				<div className="flex flex-col leading-tight">
 					<span className="text-[#666] whitespace-nowrap text-[16px]">
@@ -68,7 +90,11 @@ const Topbar = ({
 					</span>
 				</div>
 			) : (
-				<div></div>
+				<div className="flex items-center">
+					<h1 className="text-2xl font-bold text-gray-800">
+						{pageTitle || "Admin Panel"}
+					</h1>
+				</div>
 			)}
 
 			<div className="flex items-center gap-4 w-full justify-end">
@@ -89,26 +115,43 @@ const Topbar = ({
 								: "max-h-0 opacity-0"
 						}`}
 					>
-						<h3 className="text-lg font-semibold text-gray-800 mb-[5px]">
+						<h3 className="text-lg font-semibold text-gray-800 mb-[5px] flex justify-between items-center">
 							Notifications
+							{unreadCount > 0 && (
+								<span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+									{unreadCount}
+								</span>
+							)}
 						</h3>
 						<ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto thin-scrollbar">
-							{notifications.map((note) => (
-								<li key={note.id}>
-									<Link
-										to={note.path || "#"}
-										className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
-									>
-										<p className="text-sm font-medium text-gray-800">
-											{note.title}
-										</p>
-										<p className="text-xs text-gray-600">{note.message}</p>
-										<p className="text-[10px] text-gray-400 mt-1">
-											{note.time}
-										</p>
-									</Link>
+							{notifications.length === 0 ? (
+								<li className="px-2 py-4 text-center text-sm text-gray-500">
+									No notifications
 								</li>
-							))}
+							) : (
+								notifications.map((note) => (
+									<li key={note._id}>
+										<Link
+											to={note.path || "#"}
+											onClick={() => handleNotificationClick(note._id)}
+											className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
+										>
+											<div className="flex justify-between items-start">
+												<p className="text-sm font-medium text-gray-800">
+													{note.title}
+												</p>
+												{!note.isRead && (
+													<span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+												)}
+											</div>
+											<p className="text-xs text-gray-600">{note.message}</p>
+											<p className="text-[10px] text-gray-400 mt-1">
+												{new Date(note.createdAt).toLocaleString()}
+											</p>
+										</Link>
+									</li>
+								))
+							)}
 						</ul>
 					</div>
 				</div>

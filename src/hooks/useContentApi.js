@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../utils/apiClient";
 
@@ -12,6 +12,10 @@ const buildMediaUrl = (path) => {
 	if (!baseUrl) return path;
 	const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 	return `${baseUrl}/${normalizedPath}`;
+};
+
+const invalidateContent = (queryClient, keys = []) => {
+	keys.forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
 };
 
 export const useBooksQuery = (options = {}) => {
@@ -116,5 +120,192 @@ export const usePodcastsQuery = (options = {}) => {
 		},
 		select: (data) => (select ? select(data) : data),
 		...queryOptions,
+	});
+};
+
+// Blog Mutations
+export const useCreateBlogMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async (formData) => {
+			const response = await apiClient.post("/blogs/create", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			});
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Blog created successfully");
+			invalidateContent(queryClient, ["blogs"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to create blog. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
+	});
+};
+
+export const useUpdateBlogMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async ({ blogId, payload }) => {
+			if (!blogId) {
+				throw new Error("blogId is required to update a blog");
+			}
+
+			const config =
+				payload instanceof FormData
+					? {
+							method: "put",
+							url: `/blogs/${blogId}`,
+							data: payload,
+							headers: { "Content-Type": "multipart/form-data" },
+					  }
+					: {
+							method: "put",
+							url: `/blogs/${blogId}`,
+							data: payload,
+					  };
+
+			const response = await apiClient.request(config);
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Blog updated successfully");
+			invalidateContent(queryClient, ["blogs"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to update blog. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
+	});
+};
+
+export const useDeleteBlogMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async (blogId) => {
+			if (!blogId) {
+				throw new Error("blogId is required to delete a blog");
+			}
+			const response = await apiClient.delete(`/blogs/${blogId}`);
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Blog deleted successfully");
+			invalidateContent(queryClient, ["blogs"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to delete blog. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
+	});
+};
+
+// Podcast Mutations
+export const useCreatePodcastMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async (payload) => {
+			const response = await apiClient.post("/podcasts", payload);
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Podcast created successfully");
+			invalidateContent(queryClient, ["podcasts"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to create podcast. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
+	});
+};
+
+export const useUpdatePodcastMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async ({ podcastId, payload }) => {
+			if (!podcastId) {
+				throw new Error("podcastId is required to update a podcast");
+			}
+			const response = await apiClient.put(`/podcasts/${podcastId}`, payload);
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Podcast updated successfully");
+			invalidateContent(queryClient, ["podcasts"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to update podcast. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
+	});
+};
+
+export const useDeletePodcastMutation = (options = {}) => {
+	const queryClient = useQueryClient();
+	const { onSuccess, onError, ...mutationOptions } = options;
+
+	return useMutation({
+		mutationFn: async (podcastId) => {
+			if (!podcastId) {
+				throw new Error("podcastId is required to delete a podcast");
+			}
+			const response = await apiClient.delete(`/podcasts/${podcastId}`);
+			return response.data;
+		},
+		onSuccess: (data, variables, context) => {
+			toast.success(data?.message ?? "Podcast deleted successfully");
+			invalidateContent(queryClient, ["podcasts"]);
+			onSuccess?.(data, variables, context);
+		},
+		onError: (error, variables, context) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to delete podcast. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message, variables, context);
+		},
+		...mutationOptions,
 	});
 };

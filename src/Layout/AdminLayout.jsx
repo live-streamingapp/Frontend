@@ -1,25 +1,81 @@
 import React, { useState, useRef } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Admin/Sidebar";
 import Topbar from "../components/Admin/Topbar";
-import { ADMIN_NOTIFICATIONS } from "../utils/constants";
+
+// Page titles mapping for different routes
+const getPageTitle = (pathname) => {
+	const titleMap = {
+		"/admin/dashboard": "Dashboard Overview",
+		"/admin/courses": "Course Management",
+		"/admin/student-management": "Student Management",
+		"/admin/events": "Event Management",
+		"/admin/event-payment": "Event Payment Management",
+		"/admin/student-progress": "Student Progress Tracking",
+		"/admin/consultation-bookings": "Consultation Bookings",
+		"/admin/consultation-status": "Assign & Notify Consultations",
+		"/admin/products": "Product Management",
+		"/admin/product-overview": "Product Overview",
+		"/admin/product-details": "Product Details",
+		"/admin/books": "Books Management",
+		"/admin/blog-management": "Blog Management",
+		"/admin/podcast-management": "Podcast Management",
+		"/admin/banner-management": "Banner Management",
+		"/admin/payments": "Payment Gateway",
+		"/admin/customers": "Customer Management",
+		"/admin/manage-ticket": "Ticket Management",
+		"/admin/testimonials": "Testimonials & Reviews",
+		"/admin/financial-management": "Financial Management",
+		"/admin/profile": "Admin Profile",
+		"/admin/settings": "Settings",
+	};
+
+	// Check for dynamic routes
+	if (pathname.includes("/courses/") && pathname.includes("/edit")) {
+		return "Edit Course";
+	}
+	if (pathname === "/admin/create-course") {
+		return "Create New Course";
+	}
+	if (pathname === "/admin/create-event") {
+		return "Create New Event";
+	}
+	if (pathname === "/admin/add-book") {
+		return "Add New Book";
+	}
+	if (pathname.includes("/admin/blog-details/")) {
+		return "Blog Details";
+	}
+	if (pathname.includes("/admin/podcast-details/")) {
+		return "Podcast Details";
+	}
+	if (pathname.includes("/admin/product-details/")) {
+		return "Product Details";
+	}
+
+	return titleMap[pathname] || "Admin Panel";
+};
 
 const AdminLayout = () => {
+	const location = useLocation();
 	const [showNotification, setShowNotification] = useState(false);
 	const notificationRef = useRef(null);
+
+	const pageTitle = getPageTitle(location.pathname);
+
 	return (
-		<div className="flex min-h-screen">
-			<div className="sticky left-0 top-0 h-screen">
+		<div className="flex min-h-screen bg-[#FCFCFC]">
+			<div className="sticky left-0 top-0 h-screen overflow-hidden">
 				<Sidebar />
 			</div>
-			<div className="flex-1 flex flex-col">
+			<div className="flex flex-col min-w-0">
 				<Topbar
+					pageTitle={pageTitle}
 					showNotification={showNotification}
 					setShowNotification={setShowNotification}
 					notificationRef={notificationRef}
-					notifications={ADMIN_NOTIFICATIONS}
 				/>
-				<main className="p-4 flex-1">
+				<main className="p-4 md:p-6 flex-1 overflow-x-hidden">
 					<Outlet />
 				</main>
 			</div>

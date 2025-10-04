@@ -316,8 +316,7 @@ const BooksList = () => {
 
 	return (
 		<div className="max-w-6xl mx-auto p-4">
-			<div className="flex items-center justify-between mb-8">
-				<p className="text-xl font-bold">Books</p>
+			<div className="flex items-center justify-end mb-8">
 				<button
 					onClick={() => navigate("/admin/add-book")}
 					className="flex h-10 items-center gap-2 px-4 py-1 rounded-md text-white bg-gradient-to-b from-[#bf1305] to-[#f64f42]"

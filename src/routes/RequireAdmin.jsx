@@ -17,6 +17,7 @@ const RequireAdmin = () => {
 	}
 
 	// If authenticated but not admin or astrologer, redirect to home
+	// Note: In this system, astrologer IS the admin (single person managing platform)
 	if (
 		currentUser?.role !== ROLES.ADMIN &&
 		currentUser?.role !== ROLES.ASTROLOGER

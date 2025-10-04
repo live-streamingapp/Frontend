@@ -69,8 +69,7 @@ function AdminCourses() {
 					className="rounded-xl"
 				/>
 			)}
-			<div className="flex justify-between items-center">
-				<div className="text-[18px] font-semibold">Courses</div>
+			<div className="flex justify-end items-center mb-4">
 				<button
 					onClick={() => navigate("/admin/create-course")}
 					className="flex h-[40px] items-center gap-[.5rem] px-[1rem] py-[2px] rounded-[5px] cursor-pointer text-white bg-gradient-to-b from-[#bf1305] to-[#f64f42]"
@@ -99,6 +98,12 @@ function AdminCourses() {
 									₹ {course.price?.toLocaleString() || "0"}
 								</span>
 								<div className="flex gap-2">
+									<button
+										onClick={() => navigate(`/admin/courses/${course._id}`)}
+										className="text-white bg-[#3B82F6] text-[10px] w-[63px] h-[26px] px-[5px] flex justify-center items-center rounded-md"
+									>
+										View
+									</button>
 									<button
 										onClick={() =>
 											navigate(`/admin/courses/${course._id}/edit`)

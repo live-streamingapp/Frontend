@@ -19,9 +19,11 @@ export const useAdminUsersQuery = (options = {}) => {
 		queryKey,
 		queryFn: async () => {
 			const response = await apiClient.get("/admin/users");
-			const students = response.data?.students ?? [];
+			// Handle nested data structure: response.data.data
+			const apiData = response.data?.data || response.data;
+			const students = apiData?.students ?? [];
 			const count =
-				response.data?.count ?? (Array.isArray(students) ? students.length : 0);
+				apiData?.count ?? (Array.isArray(students) ? students.length : 0);
 
 			return { students, count };
 		},
@@ -36,10 +38,12 @@ export const useAdminUsersQuery = (options = {}) => {
 	});
 };
 
-export const useStudentReportsQuery = (options = {}) => {
+export const useStudentReportsQuery = (studentId = null, options = {}) => {
 	const {
 		onError,
-		queryKey = ["admin", "students", "reports"],
+		queryKey = studentId
+			? ["admin", "students", "reports", studentId]
+			: ["admin", "students", "reports"],
 		select,
 		...queryOptions
 	} = options;
@@ -47,8 +51,11 @@ export const useStudentReportsQuery = (options = {}) => {
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/admin/students/reports");
-			return response.data?.reports ?? [];
+			const url = studentId
+				? `/admin/students/reports?studentId=${studentId}`
+				: "/admin/students/reports";
+			const response = await apiClient.get(url);
+			return response.data;
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {
@@ -61,10 +68,12 @@ export const useStudentReportsQuery = (options = {}) => {
 	});
 };
 
-export const useStudentBookingsQuery = (options = {}) => {
+export const useStudentBookingsQuery = (studentId = null, options = {}) => {
 	const {
 		onError,
-		queryKey = ["admin", "students", "bookings"],
+		queryKey = studentId
+			? ["admin", "students", "bookings", studentId]
+			: ["admin", "students", "bookings"],
 		select,
 		...queryOptions
 	} = options;
@@ -72,8 +81,11 @@ export const useStudentBookingsQuery = (options = {}) => {
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/admin/students/bookings");
-			return response.data?.bookings ?? [];
+			const url = studentId
+				? `/admin/students/bookings?studentId=${studentId}`
+				: "/admin/students/bookings";
+			const response = await apiClient.get(url);
+			return response.data;
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {
@@ -86,10 +98,12 @@ export const useStudentBookingsQuery = (options = {}) => {
 	});
 };
 
-export const useStudentProgressQuery = (options = {}) => {
+export const useStudentProgressQuery = (studentId = null, options = {}) => {
 	const {
 		onError,
-		queryKey = ["admin", "students", "progress"],
+		queryKey = studentId
+			? ["admin", "students", "progress", studentId]
+			: ["admin", "students", "progress"],
 		select,
 		...queryOptions
 	} = options;
@@ -97,8 +111,11 @@ export const useStudentProgressQuery = (options = {}) => {
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/admin/students/progress");
-			return response.data?.progress ?? [];
+			const url = studentId
+				? `/admin/students/progress?studentId=${studentId}`
+				: "/admin/students/progress";
+			const response = await apiClient.get(url);
+			return response.data;
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {
@@ -149,6 +166,92 @@ export const useAdminEnquiriesQuery = (options = {}) => {
 		queryFn: async () => {
 			const response = await apiClient.get("/contact");
 			return response.data?.data ?? [];
+		},
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
+// Customer Management Hooks
+export const useCustomersQuery = (options = {}) => {
+	const {
+		onError,
+		queryKey = ["admin", "customers"],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get("/admin/customers");
+			const customers = response.data?.data?.customers ?? [];
+			const count = response.data?.data?.count ?? customers.length;
+			return { customers, count };
+		},
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
+export const useCustomerByIdQuery = (customerId, options = {}) => {
+	const {
+		onError,
+		queryKey = ["admin", "customers", customerId],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get(`/admin/customers/${customerId}`);
+			return response.data?.data ?? {};
+		},
+		enabled: !!customerId,
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
+export const useCustomerOrdersQuery = (customerId, options = {}) => {
+	const {
+		onError,
+		queryKey = customerId
+			? ["admin", "customers", customerId, "orders"]
+			: ["admin", "customers", "orders"],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const params = customerId ? { customerId } : {};
+			const response = await apiClient.get("/admin/customers/orders", {
+				params,
+			});
+			const orders = response.data?.data?.orders ?? [];
+			const count = response.data?.data?.count ?? orders.length;
+			return { orders, count };
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {

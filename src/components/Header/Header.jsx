@@ -11,8 +11,12 @@ import { FaBell } from "react-icons/fa6";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import useClickOutside from "../../hooks/useClickOutside";
 import { RxCross2 } from "react-icons/rx";
-import { menuOptions, notifications } from "../../utils/constants";
+import { menuOptions } from "../../utils/constants";
 import TopBar from "../TopBar/TopBar";
+import {
+	useNotificationsQuery,
+	useMarkAsReadMutation,
+} from "../../hooks/useNotificationsApi";
 import { PiShoppingCartFill } from "react-icons/pi";
 import { MdDashboard, MdKey } from "react-icons/md";
 import Dropdown from "./Dropdown";
@@ -108,6 +112,27 @@ const Header = () => {
 	useClickOutside(profileRef, () => setShowProfile(false));
 	useClickOutside(notificationRef, () => setShowNotification(false));
 
+	// Define userData first before using it
+	const userData = currentUser ?? fetchedUser;
+
+	// Fetch notifications for the user
+	const { data: notificationsData } = useNotificationsQuery({
+		userId: userData?._id,
+		limit: 10,
+		enabled: Boolean(userData?._id),
+	});
+
+	const notifications = notificationsData?.notifications ?? [];
+	const unreadCount = notificationsData?.unreadCount ?? 0;
+
+	const markAsReadMutation = useMarkAsReadMutation();
+
+	const handleNotificationClick = (notificationId) => {
+		if (notificationId) {
+			markAsReadMutation.mutate(notificationId);
+		}
+	};
+
 	const handleLogout = async () => {
 		try {
 			await apiClient.post("/logout", {});
@@ -121,8 +146,6 @@ const Header = () => {
 		setShowProfile(false);
 		navigate("/");
 	};
-
-	const userData = currentUser ?? fetchedUser;
 
 	return (
 		<>
@@ -194,28 +217,47 @@ const Header = () => {
 													: "max-h-0 opacity-0"
 											}`}
 										>
-											<h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-[5px] px-2">
+											<h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-[5px] px-2 flex justify-between items-center">
 												Notifications
+												{unreadCount > 0 && (
+													<span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+														{unreadCount}
+													</span>
+												)}
 											</h3>
 											<ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto thin-scrollbar">
-												{notifications.map((note) => (
-													<li key={note.id} className="">
-														<Link
-															to={note.path || "#"}
-															className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
-														>
-															<p className="text-sm font-medium text-gray-800">
-																{note.title}
-															</p>
-															<p className="text-xs text-gray-600">
-																{note.message}
-															</p>
-															<p className="text-[10px] text-gray-400 mt-1">
-																{note.time}
-															</p>
-														</Link>
+												{notifications.length === 0 ? (
+													<li className="px-2 py-4 text-center text-sm text-gray-500">
+														No notifications
 													</li>
-												))}
+												) : (
+													notifications.map((note) => (
+														<li key={note._id} className="">
+															<Link
+																to={note.path || "#"}
+																onClick={() =>
+																	handleNotificationClick(note._id)
+																}
+																className="block hover:bg-gray-100 p-2 rounded-md transition-colors duration-200"
+															>
+																<div className="flex justify-between items-start">
+																	<p className="text-sm font-medium text-gray-800">
+																		{note.title}
+																	</p>
+																	{!note.isRead && (
+																		<span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+																	)}
+																</div>
+																<p className="text-xs text-gray-600">
+																	{note.message}
+																</p>
+																<p className="text-[10px] text-gray-400 mt-1">
+																	{new Date(note.createdAt).toLocaleString()}
+																</p>
+															</Link>
+														</li>
+													))
+												)}
 											</ul>
 										</div>
 									</div>
