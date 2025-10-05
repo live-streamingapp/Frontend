@@ -24,7 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 				<BrowserRouter>
 					<App />
 				</BrowserRouter>
-				<Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+				<Toaster position="top-right" toastOptions={{ duration: 2000 }} />
 			</QueryClientProvider>
 		</Provider>
 	</React.StrictMode>

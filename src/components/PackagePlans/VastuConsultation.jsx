@@ -1,51 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import CommonConsultation from "./CommonConsultation";
-
-const plans = [
-	{
-		name: "Basic",
-		price: "11,000",
-		desc: "Signature Correction and Guidance on problems caused by current signatures.",
-		features: [
-			"Analysis of current signatures",
-			"Correction techniques",
-			"Guidance on avoiding issues caused by current signature patterns",
-		],
-	},
-	{
-		name: "Silver",
-		price: "25,000",
-		desc: "Numero Analysis of 1 Individual with complete Numero Remedies including all Lucky numbers for Bank Account, Mobile, Home Number, Office Number, Car Number, Lucky Number, etc.",
-		features: [
-			"Complete Numero Remedies",
-			"Lucky numbers for Bank, Mobile, Home, Office, Car, etc.",
-			"Get Free Signature Analysis with this report",
-		],
-	},
-	{
-		name: "Gold",
-		price: "50,000",
-		desc: "Numero Vastu Analysis of 1 Individual with Remedies. You have to send furniture layout plan of your home which should be upto 1000 sq ft area. More than 1000 sq ft will be charged @Rs. 50/- per sq ft.",
-		features: [
-			"Numero Vastu Analysis of 1 Individual",
-			"Remedies included",
-			"Furniture layout analysis (upto 1000 sq ft)",
-			"Extra area charged @Rs. 50 per sq ft",
-		],
-	},
-	{
-		name: "Platinum",
-		price: "1,25,000",
-		desc: "Numero Vastu Analysis of 3 Individuals with Remedies. You have to send furniture layout plan of your home which should be upto 2000 sq ft area. More than 2000 sq ft will be charged @Rs. 50/- per sq ft.",
-		features: [
-			"Numero Vastu Analysis of 3 Individuals",
-			"Remedies included",
-			"Furniture layout analysis (upto 2000 sq ft)",
-			"Extra area charged @Rs. 50 per sq ft",
-			"Get Free Signature Analysis for 3 with this report",
-		],
-	},
-];
 
 const planStyles = {
 	Basic: {
@@ -70,7 +25,61 @@ const planStyles = {
 		icon: "text-orange-400",
 	},
 };
+
+const getPlanTier = (price) => {
+	if (price <= 15000) return "Basic";
+	if (price <= 30000) return "Silver";
+	if (price <= 60000) return "Gold";
+	return "Platinum";
+};
+
 const VastuConsultation = () => {
+	const [plans, setPlans] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchPackages = async () => {
+			try {
+				const response = await axios.get(
+					`${
+						import.meta.env.VITE_BACKEND_URL
+					}/services?serviceType=package&category=vastu&isActive=true`
+				);
+
+				// Transform API data to match the expected format
+				const transformedPlans = response.data.data.map((service) => ({
+					name: getPlanTier(service.price),
+					price: service.price.toLocaleString("en-IN"),
+					desc: service.description,
+					features: service.features || [],
+				}));
+
+				// Sort by price
+				transformedPlans.sort((a, b) => {
+					const priceA = parseInt(a.price.replace(/,/g, ""));
+					const priceB = parseInt(b.price.replace(/,/g, ""));
+					return priceA - priceB;
+				});
+
+				setPlans(transformedPlans);
+			} catch (error) {
+				console.error("Error fetching packages:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchPackages();
+	}, []);
+
+	if (loading) {
+		return (
+			<div className="min-h-screen bg-gray-100 py-10 px-4 flex items-center justify-center">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-gray-100 py-10 px-4">
 			<h2 className="text-3xl font-bold text-center mb-10">Vastu Packages</h2>

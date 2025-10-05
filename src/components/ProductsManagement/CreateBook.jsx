@@ -16,6 +16,10 @@ const validationSchema = Yup.object({
 	price: Yup.number()
 		.typeError("Price must be a number")
 		.min(0, "Price must be positive"),
+	pages: Yup.number()
+		.typeError("Pages must be a number")
+		.min(1, "Pages must be at least 1")
+		.integer("Pages must be a whole number"),
 	highlights: Yup.object({
 		whyThisBook: Yup.string().trim(),
 		difference: Yup.string().trim(),
@@ -70,6 +74,7 @@ function CreateBook() {
 			title: "",
 			description: "",
 			price: "",
+			pages: "",
 			highlights: { whyThisBook: "", difference: "", whoCanBuy: "" },
 			keyFeatures: [""],
 			targetAudience: "",
@@ -84,6 +89,10 @@ function CreateBook() {
 					values.price === "" || values.price === null
 						? 0
 						: Number(values.price) || 0,
+				pages:
+					values.pages === "" || values.pages === null
+						? undefined
+						: Number(values.pages) || undefined,
 				highlights: {
 					whyThisBook: values.highlights.whyThisBook.trim(),
 					difference: values.highlights.difference.trim(),
@@ -231,6 +240,21 @@ function CreateBook() {
 					/>
 					{formik.touched.price && formik.errors.price && (
 						<p className="text-red-500 text-sm">{formik.errors.price}</p>
+					)}
+
+					<input
+						type="number"
+						name="pages"
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+						value={formik.values.pages}
+						placeholder="Number of Pages"
+						className="border border-gray-300 rounded-md p-3 w-full focus:ring-2 focus:ring-[#BB0E00] outline-none"
+						min={1}
+						step={1}
+					/>
+					{formik.touched.pages && formik.errors.pages && (
+						<p className="text-red-500 text-sm">{formik.errors.pages}</p>
 					)}
 
 					<h3 className="font-medium mt-4 text-[#BB0E00]">Highlights</h3>

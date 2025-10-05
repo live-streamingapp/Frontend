@@ -1,10 +1,17 @@
 import { useMemo, useState } from "react";
 import { FaCreditCard } from "react-icons/fa";
 import { MdLocalOffer } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { useCartQuery } from "../../hooks/useCartApi";
 
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export default function Payment() {
+	const navigate = useNavigate();
 	const [selectedMethod, setSelectedMethod] = useState("");
+	const [isProcessing, setIsProcessing] = useState(false);
 	const [cardDetails, setCardDetails] = useState({
 		cardNumber: "",
 		cardName: "",
@@ -14,11 +21,84 @@ export default function Payment() {
 	const [netBanking, setNetBanking] = useState("");
 	const [upiId, setUpiId] = useState("");
 
-	const { data: cartData, isLoading, isError, error } = useCartQuery();
+	const { data: cartData, isLoading, isError, error, refetch } = useCartQuery();
 
 	const { totalMRP, discount, totalAmount } = useMemo(() => {
 		return cartData?.totals ?? { totalMRP: 0, discount: 0, totalAmount: 0 };
 	}, [cartData]);
+
+	const handlePayment = async () => {
+		// Validate payment method selection
+		if (!selectedMethod) {
+			toast.error("Please select a payment method");
+			return;
+		}
+
+		// Validate cart has items
+		if (!cartData?.items || cartData.items.length === 0) {
+			toast.error("Your cart is empty");
+			return;
+		}
+
+		// Validate payment details based on selected method
+		if (selectedMethod === "card") {
+			if (
+				!cardDetails.cardNumber ||
+				!cardDetails.cardName ||
+				!cardDetails.expiry ||
+				!cardDetails.cvv
+			) {
+				toast.error("Please fill in all card details");
+				return;
+			}
+		} else if (selectedMethod === "netbanking" && !netBanking) {
+			toast.error("Please select a bank");
+			return;
+		} else if (selectedMethod === "upi" && !upiId) {
+			toast.error("Please enter UPI ID");
+			return;
+		}
+
+		try {
+			setIsProcessing(true);
+
+			// Prepare order items from cart
+			const items = cartData.items.map((item) => ({
+				itemId: item.itemId || item.productId,
+				itemType: item.itemType || item.kind || "Product",
+				quantity: item.quantity || 1,
+				price: item.price,
+			}));
+
+			// Create order
+			const orderResponse = await axios.post(
+				`${VITE_BACKEND_URL}/orders`,
+				{
+					items,
+					paymentMethod: selectedMethod,
+					clearCart: true, // Clear cart after order creation
+				},
+				{
+					withCredentials: true,
+				}
+			);
+
+			if (orderResponse.data.success) {
+				toast.success("Order placed successfully!");
+				refetch(); // Refresh cart to show it's empty
+				navigate("/my-orders"); // Redirect to orders page
+			}
+		} catch (error) {
+			console.error("Payment error:", error);
+			const message =
+				error.response?.data?.message ||
+				error.message ||
+				"Failed to process payment";
+			toast.error(message);
+		} finally {
+			setIsProcessing(false);
+		}
+	};
 
 	if (isLoading) {
 		return <p className="text-center mt-10">Loading cart...</p>;
@@ -175,8 +255,19 @@ export default function Payment() {
 				</div>
 
 				{/* Confirm Payment Button */}
-				<button className="w-full mt-4 bg-[#ba1f00] text-white py-3 rounded-xl hover:cursor-pointer">
-					Pay ₹ {totalAmount.toLocaleString()}
+				<button
+					onClick={handlePayment}
+					disabled={isProcessing || !selectedMethod}
+					className="w-full mt-4 bg-[#ba1f00] text-white py-3 rounded-xl hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					{isProcessing ? (
+						<span className="flex items-center justify-center gap-2">
+							<div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+							Processing...
+						</span>
+					) : (
+						`Pay ₹ ${totalAmount.toLocaleString()}`
+					)}
 				</button>
 			</div>
 

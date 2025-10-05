@@ -126,7 +126,29 @@ const Cart = () => {
 		const favorited = favoriteMap[key] ?? false;
 		const imageUrl =
 			item.imageUrl || item.image || "/images/default-product.png";
-		const isCourse = item.kind === "Course";
+		const itemType = item.itemType ?? item.kind ?? "Product";
+		const isCourse = itemType === "Course";
+		const isService = itemType === "Service";
+		const isConsultation = itemType === "Consultation";
+		const isBook = itemType === "Book";
+
+		// Determine badge display
+		let badgeText = "Product";
+		let badgeClass = "bg-green-100 text-green-700";
+
+		if (isCourse) {
+			badgeText = "Course";
+			badgeClass = "bg-blue-100 text-blue-700";
+		} else if (isService) {
+			badgeText = "Service";
+			badgeClass = "bg-purple-100 text-purple-700";
+		} else if (isConsultation) {
+			badgeText = "Consultation";
+			badgeClass = "bg-orange-100 text-orange-700";
+		} else if (isBook) {
+			badgeText = "Book";
+			badgeClass = "bg-teal-100 text-teal-700";
+		}
 
 		return (
 			<div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-3">
@@ -141,16 +163,9 @@ const Cart = () => {
 				<div className="flex-1">
 					<div className="flex items-center gap-2">
 						<h3 className="font-medium text-gray-800">{item.name}</h3>
-						{isCourse && (
-							<span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
-								Course
-							</span>
-						)}
-						{item.kind === "Product" && (
-							<span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-								Product
-							</span>
-						)}
+						<span className={`${badgeClass} text-xs px-2 py-1 rounded-full`}>
+							{badgeText}
+						</span>
 					</div>
 					<div className="flex items-center gap-2 mt-1">
 						<span className="text-red-600 font-semibold">
@@ -167,6 +182,12 @@ const Cart = () => {
 							{item.description}
 						</p>
 					)}
+					{item.scheduledDate && (
+						<p className="text-xs text-blue-600 mt-1">
+							Scheduled: {new Date(item.scheduledDate).toLocaleDateString()}
+							{item.scheduledTime && ` at ${item.scheduledTime}`}
+						</p>
+					)}
 				</div>
 
 				<button onClick={() => toggleFavorite(item)} className="p-1">
@@ -181,11 +202,17 @@ const Cart = () => {
 	};
 
 	const QuantityControls = ({ item }) => {
-		const isCourse = item.kind === "Course";
+		const itemType = item.itemType ?? item.kind ?? "Product";
+		const isCourse = itemType === "Course";
+		const isService = itemType === "Service";
+		const isConsultation = itemType === "Consultation";
+
+		// Courses, Services, and Consultations typically have quantity of 1
+		const hasFixedQuantity = isCourse || isService || isConsultation;
 
 		return (
 			<div className="flex items-center gap-4 px-4 pb-4">
-				{!isCourse && (
+				{!hasFixedQuantity && (
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => handleQuantityChange(item, -1)}
@@ -206,9 +233,10 @@ const Cart = () => {
 						</button>
 					</div>
 				)}
-				{isCourse && (
+				{hasFixedQuantity && (
 					<span className="text-sm text-gray-600 italic">
-						Quantity: 1 (Course enrollment)
+						Quantity: 1 (
+						{itemType === "Course" ? "Course enrollment" : itemType})
 					</span>
 				)}
 				<button

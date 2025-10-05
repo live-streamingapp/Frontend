@@ -33,7 +33,7 @@ const getPlanTier = (price) => {
 	return "Platinum";
 };
 
-const NumeroVastu = () => {
+const AstrologyPackage = () => {
 	const [plans, setPlans] = useState([]);
 	const [loading, setLoading] = useState(true);
 
@@ -43,8 +43,10 @@ const NumeroVastu = () => {
 				const response = await axios.get(
 					`${
 						import.meta.env.VITE_BACKEND_URL
-					}/services?serviceType=package&category=numerology&isActive=true`
+					}/services?serviceType=package&category=astrology&isActive=true`
 				);
+
+				console.log("Astrology Packages API Response:", response.data);
 
 				// Transform API data to match the expected format
 				const transformedPlans = response.data.data.map((service) => ({
@@ -63,7 +65,8 @@ const NumeroVastu = () => {
 
 				setPlans(transformedPlans);
 			} catch (error) {
-				console.error("Error fetching packages:", error);
+				console.error("Error fetching astrology packages:", error);
+				console.error("Error details:", error.response?.data || error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -80,10 +83,23 @@ const NumeroVastu = () => {
 		);
 	}
 
+	if (plans.length === 0) {
+		return (
+			<div className="min-h-screen bg-gray-100 py-10 px-4">
+				<h2 className="text-3xl font-bold text-center mb-10">
+					Astrology Packages
+				</h2>
+				<div className="text-center text-gray-500">
+					<p>No astrology packages available at the moment.</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-gray-100 py-10 px-4">
 			<h2 className="text-3xl font-bold text-center mb-10">
-				Numero Vastu Packages
+				Astrology Packages
 			</h2>
 
 			<div className="flex flex-wrap justify-center gap-6">
@@ -99,4 +115,4 @@ const NumeroVastu = () => {
 	);
 };
 
-export default NumeroVastu;
+export default AstrologyPackage;

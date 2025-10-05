@@ -14,9 +14,10 @@ const getPageTitle = (pathname) => {
 		"/admin/student-progress": "Student Progress Tracking",
 		"/admin/consultation-bookings": "Consultation Bookings",
 		"/admin/consultation-status": "Assign & Notify Consultations",
-		"/admin/products": "Product Management",
-		"/admin/product-overview": "Product Overview",
-		"/admin/product-details": "Product Details",
+		"/admin/services": "Service Management",
+		"/admin/create-service": "Create New Service",
+		"/admin/create-package": "Create Package/Consultation",
+		"/admin/orders": "Order Management",
 		"/admin/books": "Books Management",
 		"/admin/blog-management": "Blog Management",
 		"/admin/podcast-management": "Podcast Management",
@@ -43,14 +44,17 @@ const getPageTitle = (pathname) => {
 	if (pathname === "/admin/add-book") {
 		return "Add New Book";
 	}
+	if (pathname.includes("/admin/services/") && pathname.includes("/edit")) {
+		return "Edit Service";
+	}
+	if (pathname.includes("/admin/orders/")) {
+		return "Order Details";
+	}
 	if (pathname.includes("/admin/blog-details/")) {
 		return "Blog Details";
 	}
 	if (pathname.includes("/admin/podcast-details/")) {
 		return "Podcast Details";
-	}
-	if (pathname.includes("/admin/product-details/")) {
-		return "Product Details";
 	}
 
 	return titleMap[pathname] || "Admin Panel";

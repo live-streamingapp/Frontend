@@ -31,6 +31,7 @@ const normalizeBookForEditing = (book) => {
 		title: safe.title ?? "",
 		description: safe.description ?? "",
 		price: safe.price ?? "",
+		pages: safe.pages ?? "",
 		coverImage: safe.coverImage ?? "",
 		highlights: {
 			...DEFAULT_HIGHLIGHTS,
@@ -239,6 +240,10 @@ const BooksList = () => {
 				selectedBook.price === "" || selectedBook.price === null
 					? 0
 					: Number(selectedBook.price) || 0,
+			pages:
+				selectedBook.pages === "" || selectedBook.pages === null
+					? undefined
+					: Number(selectedBook.pages) || undefined,
 			highlights: {
 				whyThisBook: selectedBook.highlights?.whyThisBook?.trim() ?? "",
 				difference: selectedBook.highlights?.difference?.trim() ?? "",
@@ -429,6 +434,16 @@ const BooksList = () => {
 									placeholder="Price"
 									min={0}
 									step={0.01}
+								/>
+								<input
+									type="number"
+									name="pages"
+									value={selectedBook.pages}
+									onChange={handleFieldChange}
+									className="w-full border rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									placeholder="Number of Pages"
+									min={1}
+									step={1}
 								/>
 
 								<div className="space-y-2">

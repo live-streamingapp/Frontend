@@ -1,43 +1,6 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import CommonConsultation from "./CommonConsultation";
-
-const plans = [
-	{
-		name: "Basic",
-		price: "11,000",
-		desc: "One Time Consultation on Horoscope of 1 Individual on Call or at Vastu Abhishek Center.",
-		features: ["Answers for up to 3 questions with Solutions and Remedies."],
-	},
-	{
-		name: "Silver",
-		price: "25,000",
-		desc: "Horoscope Analysis of 1 Individual with Remedies, Gemstone Recommendation, and Donation Recommendation.",
-		features: [
-			"All Astrological Remedies for Problem Solving.",
-			"Guidance for Attracting Money, Growth, and Success in Life.",
-			"Consultation Package is valid for 1 year.",
-		],
-	},
-	{
-		name: "Gold",
-		price: "50,000",
-		desc: "Horoscope Analysis of 3 Individuals with Remedies, Gemstone Recommendation, and Donation Recommendation.",
-		features: [
-			"All Astrological Remedies for Problem Solving.",
-			"Guidance for Attracting Money, Growth, and Success in Life.",
-			"Consultation Package is valid for 1 year.",
-		],
-	},
-	{
-		name: "Platinum",
-		price: "70,000",
-		desc: "Horoscope Analysis of 4 Individuals with Remedies, Gemstone Recommendation, and Donation Recommendation.",
-		features: [
-			"All Astrological Remedies for Problem Solving.",
-			"Guidance for Attracting Money, Growth, and Success in Life.",
-			"Consultation Package is valid for 1 year.",
-		],
-	},
-];
 
 const planStyles = {
 	Basic: {
@@ -63,7 +26,63 @@ const planStyles = {
 	},
 };
 
+const getPlanTier = (price) => {
+	if (price <= 15000) return "Basic";
+	if (price <= 30000) return "Silver";
+	if (price <= 60000) return "Gold";
+	return "Platinum";
+};
+
 export default function Consultation() {
+	const [plans, setPlans] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchConsultations = async () => {
+			try {
+				const response = await axios.get(
+					`${
+						import.meta.env.VITE_BACKEND_URL
+					}/services?serviceType=package&category=astrology&isActive=true`
+				);
+
+				console.log("Astrology Packages API Response:", response.data);
+
+				// Transform API data to match the expected format
+				const transformedPlans = response.data.data.map((service) => ({
+					name: getPlanTier(service.price),
+					price: service.price.toLocaleString("en-IN"),
+					desc: service.description,
+					features: service.features || [],
+				}));
+
+				// Sort by price
+				transformedPlans.sort((a, b) => {
+					const priceA = parseInt(a.price.replace(/,/g, ""));
+					const priceB = parseInt(b.price.replace(/,/g, ""));
+					return priceA - priceB;
+				});
+
+				setPlans(transformedPlans);
+			} catch (error) {
+				console.error("Error fetching consultations:", error);
+				console.error("Error details:", error.response?.data || error.message);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchConsultations();
+	}, []);
+
+	if (loading) {
+		return (
+			<div className="min-h-screen bg-gray-100 py-10 px-4 flex items-center justify-center">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-gray-100 py-10 px-4">
 			<h2 className="text-3xl font-bold text-center mb-10">

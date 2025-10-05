@@ -25,6 +25,7 @@ import BlogDetails from "./components/Blogs/BlogDetails";
 import PodcastPage from "./pages/PodcastPage";
 import Contact from "./components/Contact/Contact";
 import Services from "./components/PackagePlans/Services";
+import ServicesPage from "./pages/Services"; // New services browsing page
 import Books from "./pages/Books";
 import BookDetails from "./components/BookService/BookDetails";
 import StudentDashboard from "./components/StudentDashboard/StudentDashboard";
@@ -36,7 +37,7 @@ import StudentGroupChat from "./components/StudentGroupChat/StudentGroupChat";
 import Consultation from "./components/PackagePlans/Consultation";
 import NumeroVastu from "./components/PackagePlans/NumeroVastu";
 import VastuConsultation from "./components/PackagePlans/VastuConsultation";
-import Products from "./components/Products/Products";
+import AstrologyPackage from "./components/PackagePlans/AstrologyPackage";
 
 import BlogManagement from "./components/SocialForm/BlogManagement";
 import PodcastManagement from "./components/SocialForm/PodcastManagement";
@@ -60,10 +61,6 @@ import EventPaymentManagement from "./components/CourseManagment2/CourseManagmen
 import StudentProgressTracking from "./components/CourseManagment5/CourseManagment5";
 import ConsultationBookings from "./components/CourseManagment6/CourseManagment6";
 import ConsultationStatusNotify from "./components/CourseManagment7/CourseManagment7";
-import ProductManagement from "./components/CourseManagment8/CourseManagment8";
-import ProductOverviewPage from "./components/CourseManagment9/CourseManagment9";
-import ProductDetailsPage from "./components/CourseManagment10/CourseManagment10";
-import OrderTracking from "./components/CourseManagment11/CourseManagment11";
 import VastuServicesPage from "./components/CourseManagment12/CourseManagment12";
 import RolePermissionPage from "./components/CourseManagment13/CourseManagment13";
 import PaymentSecurityPage from "./components/CourseManagment14/CourseManagment14";
@@ -82,6 +79,16 @@ import AdminSettings from "./pages/AdminSettings";
 import ChartComponent from "./components/Admin/ChartComponent";
 import CourseDetailPage from "./pages/CourseDetailPage";
 
+// New imports for Services and Orders
+import AdminServices from "./pages/AdminServices";
+import CreateService from "./pages/CreateService";
+import CreatePackage from "./pages/CreatePackage";
+import OrderManagement from "./pages/OrderManagement";
+import MyOrders from "./pages/MyOrders";
+import AdminConsultations from "./pages/AdminConsultations";
+import AdminPackages from "./pages/AdminPackages";
+import ServiceBookings from "./pages/ServiceBookings";
+
 function App() {
 	return (
 		<Routes>
@@ -96,13 +103,14 @@ function App() {
 				<Route path="vastu-office" element={<VastuOffice />} />
 				<Route path="vastu-industrial" element={<VastuIndustrial />} />
 				<Route path="astrology-consultation" element={<Consultation />} />
+				<Route path="astrology-package" element={<AstrologyPackage />} />
 				<Route path="numero-consultation" element={<NumeroVastu />} />
 				<Route path="vastu-consultation" element={<VastuConsultation />} />
 				<Route path="blogs" element={<Blogs />} />
 				<Route path="blogs/:id" element={<BlogDetails />} />
 				<Route path="podcast" element={<PodcastPage />} />
 				<Route path="contact" element={<Contact />} />
-				<Route path="services" element={<Services />} />
+				<Route path="services" element={<ServicesPage />} />
 				<Route path="books" element={<Books />} />
 				<Route path="books/:id" element={<BookDetails />} />
 
@@ -111,8 +119,8 @@ function App() {
 					<Route path="profile" element={<Profile />} />
 					<Route path="chat" element={<StudentChatPage />} />
 					<Route path="my-courses" element={<MyCourses />} />
+					<Route path="my-orders" element={<MyOrders />} />
 					<Route path="group-discussion" element={<StudentGroupChat />} />
-					<Route path="products" element={<Products />} />
 					<Route path="cart" element={<Cart />} />
 					<Route path="cart-page" element={<ReviewCart />} />
 				</Route>
@@ -151,16 +159,18 @@ function App() {
 						path="consultation-status"
 						element={<ConsultationStatusNotify />}
 					/>
-					{/* Product Management */}
-					<Route path="products" element={<ProductManagement />} />
-					<Route path="product-overview" element={<ProductOverviewPage />} />
-					<Route
-						path="product-details/:productId"
-						element={<ProductDetailsPage />}
-					/>
+					<Route path="create-package" element={<CreatePackage />} />
+					{/* Services Management - Three Types */}
+					<Route path="consultations" element={<AdminConsultations />} />
+					<Route path="packages" element={<AdminPackages />} />
+					<Route path="services" element={<AdminServices />} />
+					<Route path="service-bookings" element={<ServiceBookings />} />
+					<Route path="create-service" element={<CreateService />} />
 					{/* Books Management */}
 					<Route path="books" element={<BooksList />} />
 					<Route path="add-book" element={<CreateBook />} />
+					{/* Orders Management */}
+					<Route path="orders" element={<OrderManagement />} />
 					{/* Legacy Routes - To be reviewed */}
 					<Route path="courses/payment" element={<EventPaymentManagement />} />
 					<Route
@@ -175,19 +185,6 @@ function App() {
 						path="courses/NotifyStatus"
 						element={<ConsultationStatusNotify />}
 					/>
-					<Route
-						path="courses/ProductManagment"
-						element={<ProductManagement />}
-					/>
-					<Route
-						path="courses/ProductOverview"
-						element={<ProductOverviewPage />}
-					/>
-					<Route
-						path="courses/ProductDetails"
-						element={<ProductDetailsPage />}
-					/>
-					<Route path="courses/OrderTracking" element={<OrderTracking />} />
 					<Route path="courses/VastuServices" element={<VastuServicesPage />} />
 					<Route
 						path="courses/RolePermission"

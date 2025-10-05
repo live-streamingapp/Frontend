@@ -16,7 +16,7 @@ const TABS = [
 	{ key: "basicDetails", label: "Basic Details" },
 	{ key: "courseProgress", label: "Course Progress" },
 	{ key: "bookingHistory", label: "Booking History" },
-	{ key: "reportsDownload", label: "Reports Download" },
+	// { key: "reportsDownload", label: "Reports Download" },
 ];
 
 const PER_PAGE = 10;

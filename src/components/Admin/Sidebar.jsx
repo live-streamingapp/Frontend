@@ -20,6 +20,8 @@ import {
 	FaTicketAlt,
 	FaBullhorn,
 	FaMoneyBillWave,
+	FaServicestack,
+	FaClipboardList,
 } from "react-icons/fa";
 
 const menuItems = [
@@ -37,11 +39,11 @@ const menuItems = [
 				path: "/admin/student-management",
 				icon: <FaBook size={17} />,
 			},
-			{
-				title: "Customer Management",
-				path: "/admin/customers",
-				icon: <FaUsers size={17} />,
-			},
+			// {
+			// 	title: "Customer Management",
+			// 	path: "/admin/customers",
+			// 	icon: <FaUsers size={17} />,
+			// },
 		],
 	},
 	{
@@ -72,19 +74,29 @@ const menuItems = [
 		],
 	},
 	{
-		title: "Consultation",
-		icon: <FaComments size={20} />,
+		title: "Services",
+		icon: <FaServicestack size={20} />,
 		children: [
 			{
-				title: "Bookings",
-				path: "/admin/consultation-bookings",
+				title: "Consultations",
+				path: "/admin/consultations",
+				icon: <FaComments size={17} />,
+			},
+			{
+				title: "Packages",
+				path: "/admin/packages",
+				icon: <FaBox size={17} />,
+			},
+			{
+				title: "Standalone Services",
+				path: "/admin/services",
+				icon: <FaServicestack size={17} />,
+			},
+			{
+				title: "Service Bookings",
+				path: "/admin/service-bookings",
 				icon: <FaBook size={17} />,
 			},
-			// {
-			// 	title: "Assign & Notify",
-			// 	path: "/admin/consultation-status",
-			// 	icon: <FaBullhorn size={17} />,
-			// },
 		],
 	},
 	{
@@ -96,12 +108,12 @@ const menuItems = [
 				path: "/admin/books",
 				icon: <FaBook size={17} />,
 			},
-			{
-				title: "Product Overview",
-				path: "/admin/product-overview",
-				icon: <FaChartLine size={17} />,
-			},
 		],
+	},
+	{
+		title: "Orders",
+		icon: <FaClipboardList size={20} />,
+		path: "/admin/orders",
 	},
 	{
 		title: "Content Management",
@@ -124,17 +136,17 @@ const menuItems = [
 			},
 		],
 	},
-	{
-		title: "Finance",
-		icon: <FaRupeeSign size={20} />,
-		children: [
-			{
-				title: "Financial Reports",
-				path: "/admin/financial-management",
-				icon: <FaMoneyBillWave size={17} />,
-			},
-		],
-	},
+	// {
+	// 	title: "Finance",
+	// 	icon: <FaRupeeSign size={20} />,
+	// 	children: [
+	// 		{
+	// 			title: "Financial Reports",
+	// 			path: "/admin/financial-management",
+	// 			icon: <FaMoneyBillWave size={17} />,
+	// 		},
+	// 	],
+	// },
 	{
 		title: "Support",
 		icon: <FaTicketAlt size={20} />,
