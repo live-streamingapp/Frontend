@@ -24,7 +24,7 @@ function ViewConsultationModal({ consultationId, onClose }) {
 
 	if (isLoading) {
 		return (
-			<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div className="fixed inset-0 bg-gray-400/40 flex items-center justify-center z-50">
 				<div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
 					<div className="flex justify-center items-center">
 						<div className="text-lg">Loading consultation details...</div>
@@ -37,7 +37,7 @@ function ViewConsultationModal({ consultationId, onClose }) {
 	if (!consultation) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div className="fixed inset-0 bg-gray-400/40 flex items-center justify-center z-50">
 			<div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex justify-between items-center mb-6">
@@ -249,7 +249,7 @@ function EditConsultationModal({ consultationId, onClose }) {
 
 	if (isLoading) {
 		return (
-			<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div className="fixed inset-0 bg-gray-400/40 flex items-center justify-center z-50">
 				<div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
 					<div className="flex justify-center items-center">
 						<div className="text-lg">Loading consultation details...</div>
@@ -278,7 +278,7 @@ function EditConsultationModal({ consultationId, onClose }) {
 	}
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div className="fixed inset-0 bg-gray-400/40 flex items-center justify-center z-50">
 			<div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex justify-between items-center mb-6">

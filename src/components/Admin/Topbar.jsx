@@ -98,7 +98,7 @@ const Topbar = ({
 
 				{/* Conditionally render greeting or page title */}
 				{!shouldHideGreeting ? (
-					<div className="flex flex-col leading-tight">
+					<div className="hidden sm:flex flex-col leading-tight">
 						<span className="text-[#666] whitespace-nowrap text-[16px]">
 							Welcome !
 						</span>
@@ -107,7 +107,7 @@ const Topbar = ({
 						</span>
 					</div>
 				) : (
-					<div className="flex items-center">
+					<div className="hidden sm:flex items-center">
 						<h1 className="text-2xl font-bold text-gray-800">
 							{pageTitle || "Admin Panel"}
 						</h1>

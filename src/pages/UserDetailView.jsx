@@ -99,15 +99,17 @@ export default function UserDetailView() {
 
 	const orders = useMemo(() => ordersData?.orders ?? [], [ordersData]);
 	const reports = useMemo(
-		() => (reportsData ?? []).filter((r) => r.student?._id === userId),
+		() => (reportsData?.reports ?? []).filter((r) => r.student?._id === userId),
 		[reportsData, userId]
 	);
 	const bookings = useMemo(
-		() => (bookingsData ?? []).filter((b) => b.student?._id === userId),
+		() =>
+			(bookingsData?.bookings ?? []).filter((b) => b.student?._id === userId),
 		[bookingsData, userId]
 	);
 	const progress = useMemo(
-		() => (progressData ?? []).filter((p) => p.student?._id === userId),
+		() =>
+			(progressData?.progress ?? []).filter((p) => p.student?._id === userId),
 		[progressData, userId]
 	);
 

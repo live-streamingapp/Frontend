@@ -226,7 +226,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 											<ul className="pl-6 space-y-1">
 												{item.children.map((child) => (
 													<li key={child.title}>
-														<NavLink to={child.path} className={subNavClass}>
+														<NavLink
+															to={child.path}
+															className={subNavClass}
+															onClick={() => setSidebarOpen(false)}
+														>
 															{child.icon} {child.title}
 														</NavLink>
 													</li>
@@ -235,7 +239,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 										)}
 									</>
 								) : (
-									<NavLink to={item.path} className={navClass}>
+									<NavLink
+										to={item.path}
+										className={navClass}
+										onClick={() => setSidebarOpen(false)}
+									>
 										{item.icon} {item.title}
 									</NavLink>
 								)}
