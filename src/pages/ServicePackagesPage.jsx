@@ -183,8 +183,11 @@ const ServicePackagesPage = ({
 	if (loading) {
 		return (
 			<div className="min-h-screen bg-gray-100 py-10 px-4">
-				<div className="flex items-center justify-center py-20">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+				<div className="max-w-7xl mx-auto">
+					<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
+					<div className="flex items-center justify-center py-20">
+						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+					</div>
 				</div>
 			</div>
 		);
@@ -194,15 +197,17 @@ const ServicePackagesPage = ({
 	if (error) {
 		return (
 			<div className="min-h-screen bg-gray-100 py-10 px-4">
-				<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
-				<div className="text-center py-10">
-					<p className="text-red-600 mb-4">{error}</p>
-					<button
-						onClick={() => window.location.reload()}
-						className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-					>
-						Retry
-					</button>
+				<div className="max-w-7xl mx-auto">
+					<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
+					<div className="text-center py-10">
+						<p className="text-red-600 mb-4">{error}</p>
+						<button
+							onClick={() => window.location.reload()}
+							className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+						>
+							Retry
+						</button>
+					</div>
 				</div>
 			</div>
 		);
@@ -212,10 +217,12 @@ const ServicePackagesPage = ({
 	if (services.length === 0) {
 		return (
 			<div className="min-h-screen bg-gray-100 py-10 px-4">
-				<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
-				<div className="text-center text-gray-500 py-10">
-					<p className="text-lg">No services available at the moment.</p>
-					<p className="text-sm mt-2">Please check back later.</p>
+				<div className="max-w-7xl mx-auto">
+					<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
+					<div className="text-center text-gray-500 py-10">
+						<p className="text-lg">No services available at the moment.</p>
+						<p className="text-sm mt-2">Please check back later.</p>
+					</div>
 				</div>
 			</div>
 		);
@@ -224,22 +231,25 @@ const ServicePackagesPage = ({
 	// Services Grid
 	return (
 		<div className="min-h-screen bg-gray-100 py-10 px-4">
-			<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
+			<div className="max-w-7xl mx-auto">
+				<h2 className="text-3xl font-bold text-center mb-10">{title}</h2>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
-				{services.map((service) => (
-					<ServiceCard
-						key={service._id}
-						service={service}
-						isAdmin={isAdmin}
-						onEdit={handleEdit}
-						onDelete={handleDelete}
-						onAddToCart={handleAddToCart}
-						isAddingToCart={addingToCartId === service._id}
-						isInCart={isServiceInCart(service._id)}
-						isDeleting={false}
-					/>
-				))}
+				<div className="flex flex-wrap justify-center gap-6">
+					{services.map((service) => (
+						<div key={service._id} className="flex justify-center">
+							<ServiceCard
+								service={service}
+								isAdmin={isAdmin}
+								onEdit={handleEdit}
+								onDelete={handleDelete}
+								onAddToCart={handleAddToCart}
+								isAddingToCart={addingToCartId === service._id}
+								isInCart={isServiceInCart(service._id)}
+								isDeleting={false}
+							/>
+						</div>
+					))}
+				</div>
 			</div>
 		</div>
 	);

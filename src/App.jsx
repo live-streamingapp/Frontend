@@ -28,10 +28,9 @@ import BookDetails from "./components/BookService/BookDetails";
 import StudentDashboard from "./components/StudentDashboard/StudentDashboard";
 import Profile from "./components/StudentProfile/Profile";
 import EditProfile from "./components/StudentProfile/EditProfile";
-import StudentChatPage from "./pages/StudentChatPage";
-import AstrologerChatPage from "./pages/AstrologerChatPage";
+import StudentUnifiedChatPage from "./pages/StudentUnifiedChatPage";
+import AstrologerUnifiedChatPage from "./pages/AstrologerUnifiedChatPage";
 import MyCourses from "./components/StudentMyCourses/MyCourses";
-import StudentGroupChat from "./components/StudentGroupChat/StudentGroupChat";
 
 import BlogManagement from "./components/SocialForm/BlogManagement";
 import PodcastManagement from "./components/SocialForm/PodcastManagement";
@@ -107,6 +106,17 @@ function App() {
 					}
 				/>
 				<Route
+					path="vastu-residential"
+					element={
+						<ServicePackagesPage
+							title="Vastu for Residential Consultations"
+							serviceType="consultation"
+							category="vastu"
+							subCategory="Vastu for Home"
+						/>
+					}
+				/>
+				<Route
 					path="vastu-office"
 					element={
 						<ServicePackagesPage
@@ -124,7 +134,7 @@ function App() {
 							title="Vastu for Industrial Consultations"
 							serviceType="consultation"
 							category="vastu"
-							subCategory="Vastu for Industrial"
+							subCategory="Vastu for Factory/Commercial"
 						/>
 					}
 				/>
@@ -184,10 +194,8 @@ function App() {
 					<Route path="dashboard" element={<StudentDashboard />} />
 					<Route path="profile" element={<Profile />} />
 					<Route path="edit-profile" element={<EditProfile />} />
-					<Route path="chat" element={<StudentChatPage />} />
 					<Route path="my-courses" element={<MyCourses />} />
 					<Route path="my-orders" element={<MyOrders />} />
-					<Route path="group-discussion" element={<StudentGroupChat />} />
 					<Route path="cart" element={<Cart />} />
 					<Route path="cart-page" element={<ReviewCart />} />
 				</Route>
@@ -202,12 +210,19 @@ function App() {
 				<Route path="*" element={<NotFound />} />
 			</Route>
 
+			{/* Student Chat - Full Screen Outside Layout */}
+			<Route element={<RequireAuth />}>
+				<Route path="/chat" element={<StudentUnifiedChatPage />} />
+			</Route>
+
 			<Route element={<RequireAdmin />}>
+				{/* Admin Chat - Full Screen Outside Layout */}
+				<Route path="/admin/chat" element={<AstrologerUnifiedChatPage />} />
+
 				<Route path="/admin" element={<AdminLayout />}>
 					<Route path="dashboard" element={<Dashboard />} />
 					<Route path="profile" element={<AdminProfile />} />
 					<Route path="settings" element={<AdminSettings />} />
-					<Route path="chat" element={<AstrologerChatPage />} />
 					<Route path="student-management" element={<StudentManagement />} />
 					<Route path="courses" element={<AdminCourses />} />
 					<Route path="courses/:courseId/edit" element={<CreateCourseForm />} />

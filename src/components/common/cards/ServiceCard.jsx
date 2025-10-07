@@ -94,7 +94,7 @@ const ServiceCard = ({
 
 	return (
 		<BaseCard
-			className={`p-6 flex flex-col justify-between min-w-[280px] max-w-[340px] transition-transform hover:scale-105 ${style.gradient}`}
+			className={`p-6 flex flex-col justify-between w-full max-w-[340px] mx-auto transition-transform hover:scale-105 ${style.gradient}`}
 			variant="gradient"
 		>
 			{/* Admin controls */}
@@ -168,11 +168,11 @@ const ServiceCard = ({
 						{service.features.slice(0, 4).map((feature, i) => (
 							<li key={i} className="flex items-start gap-2 text-sm">
 								<FaCaretRight className={`${style.icon} mt-1 flex-shrink-0`} />
-								<span className="line-clamp-2">{feature}</span>
+								<span className="line-clamp-2 text-left">{feature}</span>
 							</li>
 						))}
 						{service.features.length > 4 && (
-							<li className="text-xs opacity-70 text-center">
+							<li className="text-xs opacity-70 text-center mt-2">
 								+{service.features.length - 4} more features
 							</li>
 						)}

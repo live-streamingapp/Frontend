@@ -41,6 +41,11 @@ const LetsTalk = () => {
 		},
 
 		onSubmit: (values, { resetForm }) => {
+			// Prevent submission if already submitting
+			if (contactMutation.isPending) {
+				return;
+			}
+
 			contactMutation.mutate(values, {
 				onSuccess: () => {
 					resetForm();
@@ -68,7 +73,10 @@ const LetsTalk = () => {
 						value={formik.values.name}
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 					/>
 					{formik.touched.name && formik.errors.name && (
 						<p className="text-xs sm:text-sm text-red-600 -mt-2">
@@ -84,7 +92,10 @@ const LetsTalk = () => {
 						value={formik.values.email}
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 					/>
 					{formik.touched.email && formik.errors.email && (
 						<p className="text-xs sm:text-sm text-red-600 -mt-2">
@@ -107,7 +118,10 @@ const LetsTalk = () => {
 							}
 						}}
 						onBlur={formik.handleBlur}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 						inputMode="numeric"
 						pattern="[0-9]*"
 					/>
@@ -125,7 +139,10 @@ const LetsTalk = () => {
 						value={formik.values.country}
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 					/>
 					{formik.touched.country && formik.errors.country && (
 						<p className="text-xs sm:text-sm text-red-600 -mt-2">
@@ -140,7 +157,10 @@ const LetsTalk = () => {
 						value={formik.values.city}
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 					/>
 					{formik.touched.city && formik.errors.city && (
 						<p className="text-xs sm:text-sm text-red-600 -mt-2">
@@ -155,15 +175,30 @@ const LetsTalk = () => {
 						placeholder="Message"
 						value={formik.values.message}
 						onChange={formik.handleChange}
-						className="w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none resize-none text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full bg-[#fed2b4] px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-100 focus:ring-2 focus:ring-pink-300 focus:outline-none resize-none text-sm sm:text-base ${
+							contactMutation.isPending ? "opacity-60 cursor-not-allowed" : ""
+						}`}
 					></textarea>
 
 					{/* Button */}
 					<button
 						type="submit"
-						className="w-full py-2.5 sm:py-3 rounded-lg bg-gradient-to-r from-[#c02c07] to-red-600 text-white font-semibold shadow-lg transform hover:scale-101 transition-transform cursor-pointer text-sm sm:text-base"
+						disabled={contactMutation.isPending}
+						className={`w-full py-2.5 sm:py-3 rounded-lg bg-gradient-to-r from-[#c02c07] to-red-600 text-white font-semibold shadow-lg transform transition-all duration-200 text-sm sm:text-base flex items-center justify-center gap-2 ${
+							contactMutation.isPending
+								? "opacity-70 cursor-not-allowed"
+								: "hover:scale-101 cursor-pointer"
+						}`}
 					>
-						Send Message
+						{contactMutation.isPending ? (
+							<>
+								<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+								Sending...
+							</>
+						) : (
+							"Send Message"
+						)}
 					</button>
 				</form>
 			</div>

@@ -8,6 +8,7 @@ import {
 	FaUser,
 } from "react-icons/fa";
 import { FaBell } from "react-icons/fa6";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import useClickOutside from "../../hooks/useClickOutside";
 import { RxCross2 } from "react-icons/rx";
@@ -50,26 +51,33 @@ const profileDropdownItems = [
 	},
 	{
 		id: 3,
+		label: "Chat",
+		icon: <IoChatbubbleEllipsesOutline />,
+		path: "/chat",
+		hideAbove900: true,
+	},
+	{
+		id: 4,
 		label: "Notifications",
 		icon: <FaBell />,
 		path: "/notifications",
 		hideAbove900: true,
 	},
 	{
-		id: 4,
+		id: 5,
 		label: "Cart",
 		icon: <PiShoppingCartFill />,
 		path: "/cart",
 		hideAbove900: true,
 	},
 	{
-		id: 5,
+		id: 6,
 		label: "Change Password",
 		icon: <MdKey />,
 		path: "/change-password",
 	},
 	{
-		id: 6,
+		id: 7,
 		label: "Logout",
 		icon: <FaSignOutAlt />,
 		path: "/logout",
@@ -210,6 +218,17 @@ const Header = () => {
 
 								{/* Right Icons */}
 								<div className="flex items-center gap-2 sm:gap-3">
+									{/* Chat Icon - Only show when authenticated */}
+									{isAuthenticated && (
+										<button
+											className="max-[1100px]:hidden cursor-pointer flex items-center justify-center bg-white border border-gray-200 h-[40px] w-[40px] sm:h-[45px] sm:w-[45px] rounded-full hover:bg-gray-50 transition-colors"
+											onClick={() => navigate("/chat")}
+											title="Chat"
+										>
+											<IoChatbubbleEllipsesOutline className="text-gray-700 text-base sm:text-lg" />
+										</button>
+									)}
+
 									{/* Notification Section */}
 									{isAuthenticated && (
 										<div ref={notificationRef} className="max-[1100px]:hidden">

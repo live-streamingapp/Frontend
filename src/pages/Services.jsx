@@ -192,19 +192,20 @@ const Services = () => {
 
 			{/* Services Grid */}
 			{!loading && services.length > 0 && (
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+				<div className="flex flex-wrap justify-center gap-6 mb-8">
 					{services.map((service) => (
-						<ServiceCard
-							key={service._id}
-							service={service}
-							isAdmin={isAdmin}
-							onEdit={handleEdit}
-							onDelete={handleDelete}
-							onAddToCart={handleAddToCart}
-							isAddingToCart={addingToCartId === service._id}
-							isInCart={isServiceInCart(service._id)}
-							isDeleting={false}
-						/>
+						<div key={service._id} className="flex justify-center">
+							<ServiceCard
+								service={service}
+								isAdmin={isAdmin}
+								onEdit={handleEdit}
+								onDelete={handleDelete}
+								onAddToCart={handleAddToCart}
+								isAddingToCart={addingToCartId === service._id}
+								isInCart={isServiceInCart(service._id)}
+								isDeleting={false}
+							/>
+						</div>
 					))}
 				</div>
 			)}

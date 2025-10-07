@@ -23,12 +23,18 @@ import {
 	FaServicestack,
 	FaClipboardList,
 } from "react-icons/fa";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 
 const menuItems = [
 	{
 		title: "Dashboard",
 		icon: <FaHome size={20} />,
 		path: "/admin/dashboard",
+	},
+	{
+		title: "Chat",
+		icon: <IoChatbubbleEllipsesOutline size={20} />,
+		path: "/admin/chat",
 	},
 	{
 		title: "User Management",
