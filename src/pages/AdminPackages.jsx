@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import {
+	useServicesQuery,
+	useDeleteServiceMutation,
+} from "../hooks/useServicesApi";
 import CommonConsultation from "../components/PackagePlans/CommonConsultation";
 
 const planStyles = {
@@ -37,8 +39,6 @@ const getPlanTier = (price) => {
 
 const AdminPackages = () => {
 	const navigate = useNavigate();
-	const [packages, setPackages] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState({
 		category: "",
 		subCategory: "",
@@ -46,48 +46,28 @@ const AdminPackages = () => {
 		limit: 10,
 	});
 
-	const fetchPackages = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			params.append("serviceType", "package");
-			if (filter.category) params.append("category", filter.category);
-			if (filter.subCategory) params.append("subCategory", filter.subCategory);
-			params.append("page", filter.page);
-			params.append("limit", filter.limit);
+	// Build query params from filter
+	const queryParams = {
+		serviceType: "package",
+		page: filter.page,
+		limit: filter.limit,
+	};
+	if (filter.category) queryParams.category = filter.category;
+	if (filter.subCategory) queryParams.subCategory = filter.subCategory;
 
-			const response = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/services?${params.toString()}`,
-				{ withCredentials: true }
-			);
+	// Use services query hook for packages
+	const { data: packages = [], isLoading: loading } = useServicesQuery({
+		params: queryParams,
+	});
 
-			setPackages(response.data.data);
-		} catch (error) {
-			console.error("Error fetching packages:", error);
-			toast.error("Failed to fetch packages");
-		} finally {
-			setLoading(false);
-		}
-	}, [filter]);
+	// Delete mutation hook
+	const deleteServiceMutation = useDeleteServiceMutation();
 
-	useEffect(() => {
-		fetchPackages();
-	}, [fetchPackages]);
-
-	const handleDelete = async (id) => {
+	const handleDelete = (id) => {
 		if (!window.confirm("Are you sure you want to delete this package?"))
 			return;
 
-		try {
-			await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/services/${id}`, {
-				withCredentials: true,
-			});
-			toast.success("Package deleted successfully");
-			fetchPackages();
-		} catch (error) {
-			console.error("Error deleting package:", error);
-			toast.error("Failed to delete package");
-		}
+		deleteServiceMutation.mutate(id);
 	};
 
 	const handleEdit = (id) => {

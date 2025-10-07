@@ -1,7 +1,11 @@
-import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import ebookImg from "../../assets/ebook.png";
 import { useBookQuery } from "../../hooks/useContentApi";
+import { useAddToCartMutation, useCartQuery } from "../../hooks/useCartApi";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 const buildBannerImage = (book) => {
 	if (!book) return ebookImg;
@@ -28,6 +32,22 @@ const formatLanguageOptions = (options = []) =>
 
 export default function BookDetails() {
 	const { id } = useParams();
+	const navigate = useNavigate();
+
+	// Authentication and Cart
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin = currentUser?.role === "admin";
+
+	// State
+	const [selectedLanguage, setSelectedLanguage] = useState("English");
+	const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+	// Hooks
+	const { mutate: addToCart } = useAddToCartMutation();
+	const { data: cartData } = useCartQuery(undefined, {
+		skip: !currentUser || isAdmin,
+	});
+
 	const {
 		data: rawBook,
 		isLoading,
@@ -46,6 +66,53 @@ export default function BookDetails() {
 			bannerImage: buildBannerImage(rawBook),
 		};
 	}, [rawBook]);
+
+	// Check if book is in cart
+	const isBookInCart = useMemo(() => {
+		if (!book || !cartData?.items) return false;
+		return cartData.items.some(
+			(item) =>
+				(item.itemId === book._id || item.productId === book._id) &&
+				item.itemType === "Book"
+		);
+	}, [book, cartData]);
+
+	// Add to cart handler
+	const handleAddToCart = () => {
+		if (!currentUser) {
+			toast("Please log in to continue", { icon: "🔐" });
+			navigate("/auth/login", {
+				state: { from: { pathname: window.location.pathname } },
+			});
+			return;
+		}
+
+		if (isBookInCart) {
+			navigate("/cart");
+			return;
+		}
+
+		setIsAddingToCart(true);
+		addToCart(
+			{
+				itemId: book._id,
+				itemType: "Book",
+				quantity: 1,
+				additionalInfo: selectedLanguage
+					? { language: selectedLanguage }
+					: undefined,
+			},
+			{
+				onSuccess: () => {
+					setIsAddingToCart(false);
+				},
+				onError: (error) => {
+					setIsAddingToCart(false);
+					toast.error(error?.message || "Failed to add to cart");
+				},
+			}
+		);
+	};
 
 	if (isLoading) {
 		return (
@@ -160,45 +227,94 @@ export default function BookDetails() {
 										₹{book.price}
 									</div>
 								)}
-								{book.languageOptions.length > 0 && (
-									<div className="flex flex-wrap gap-3">
-										{book.languageOptions.map((lang) => (
-											<div key={lang.id} className="relative">
-												<button
-													disabled={!lang.available || !lang.buyLink}
-													onClick={() =>
-														lang.buyLink && window.open(lang.buyLink, "_blank")
-													}
-													className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition ${
-														lang.available && lang.buyLink
-															? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl"
-															: "cursor-not-allowed bg-gray-300 text-gray-500"
-													}`}
+
+								{/* Language Selection and Add to Cart */}
+								<div className="flex flex-wrap items-center gap-3">
+									{book.languageOptions.length > 1 && (
+										<select
+											value={selectedLanguage}
+											onChange={(e) => setSelectedLanguage(e.target.value)}
+											className="rounded-full border-2 border-orange-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+										>
+											{book.languageOptions.map((lang) => (
+												<option key={lang.id} value={lang.language}>
+													{lang.language}
+												</option>
+											))}
+										</select>
+									)}
+
+									<button
+										onClick={handleAddToCart}
+										disabled={isAddingToCart || isAdmin}
+										className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition shadow-lg hover:shadow-xl ${
+											isBookInCart
+												? "bg-green-500 text-white hover:bg-green-600"
+												: isAddingToCart
+												? "cursor-not-allowed bg-gray-300 text-gray-500"
+												: "bg-orange-500 text-white hover:bg-orange-600"
+										}`}
+									>
+										{isAddingToCart ? (
+											<>
+												<svg
+													className="h-5 w-5 animate-spin"
+													fill="none"
+													viewBox="0 0 24 24"
 												>
-													<svg
-														className="h-5 w-5"
-														fill="none"
-														viewBox="0 0 24 24"
+													<circle
+														className="opacity-25"
+														cx="12"
+														cy="12"
+														r="10"
 														stroke="currentColor"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-														/>
-													</svg>
-													Buy {lang.language} Version
-												</button>
-												{lang.stock > 0 && lang.stock <= 5 && (
-													<span className="absolute -top-2 -right-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
-														Only {lang.stock} left
-													</span>
-												)}
-											</div>
-										))}
-									</div>
-								)}
+														strokeWidth="4"
+													/>
+													<path
+														className="opacity-75"
+														fill="currentColor"
+														d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+													/>
+												</svg>
+												Adding...
+											</>
+										) : isBookInCart ? (
+											<>
+												<svg
+													className="h-5 w-5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M5 13l4 4L19 7"
+													/>
+												</svg>
+												Go to Cart
+											</>
+										) : (
+											<>
+												<svg
+													className="h-5 w-5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+													/>
+												</svg>
+												Add to Cart
+											</>
+										)}
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -398,17 +514,66 @@ export default function BookDetails() {
 							<p className="mb-4 text-sm text-orange-100">
 								Get your copy now and start your journey!
 							</p>
-							{book.languageOptions
-								.filter((option) => option.available && option.buyLink)
-								.map((option) => (
-									<button
-										key={option.id}
-										onClick={() => window.open(option.buyLink, "_blank")}
-										className="w-full rounded-full bg-white px-6 py-3 text-center font-semibold text-orange-600 transition hover:bg-orange-50"
-									>
-										Buy Now - {option.language}
-									</button>
-								))}
+
+							{/* Language Selection for Single Language or Multiple */}
+							{book.languageOptions.length > 1 && (
+								<select
+									value={selectedLanguage}
+									onChange={(e) => setSelectedLanguage(e.target.value)}
+									className="mb-3 w-full rounded-full border-2 border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50"
+								>
+									{book.languageOptions.map((lang) => (
+										<option
+											key={lang.id}
+											value={lang.language}
+											className="text-gray-900"
+										>
+											{lang.language}
+										</option>
+									))}
+								</select>
+							)}
+
+							<button
+								onClick={handleAddToCart}
+								disabled={isAddingToCart || isAdmin}
+								className={`w-full rounded-full px-6 py-3 text-center font-semibold transition ${
+									isBookInCart
+										? "bg-green-600 text-white hover:bg-green-700"
+										: isAddingToCart
+										? "cursor-not-allowed bg-gray-300 text-gray-500"
+										: "bg-white text-orange-600 hover:bg-orange-50"
+								}`}
+							>
+								{isAddingToCart ? (
+									<span className="inline-flex items-center justify-center gap-2">
+										<svg
+											className="h-5 w-5 animate-spin"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+											/>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											/>
+										</svg>
+										Adding to Cart...
+									</span>
+								) : isBookInCart ? (
+									"In Cart - View Cart"
+								) : (
+									`Add to Cart - ${selectedLanguage}`
+								)}
+							</button>
 						</div>
 					</div>
 				</div>

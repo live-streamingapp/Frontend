@@ -1,10 +1,10 @@
-import React from 'react'
-import ContentManagement from '../components/AdminDashboard/ContentManagement'
+import React from "react";
+import AdminBanners from "../components/AdminDashboard/AdminBanners";
 
 export const BannerManagement = () => {
-  return (
-    <>
-    <ContentManagement/>
-    </>
-  )
-}
+	return (
+		<>
+			<AdminBanners />
+		</>
+	);
+};

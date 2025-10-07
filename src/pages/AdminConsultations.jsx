@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import {
+	useServicesQuery,
+	useDeleteServiceMutation,
+} from "../hooks/useServicesApi";
 import CommonConsultation from "../components/PackagePlans/CommonConsultation";
 
 const planStyles = {
@@ -37,8 +39,6 @@ const getPlanTier = (price) => {
 
 const AdminConsultations = () => {
 	const navigate = useNavigate();
-	const [consultations, setConsultations] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState({
 		category: "",
 		subCategory: "",
@@ -46,48 +46,28 @@ const AdminConsultations = () => {
 		limit: 10,
 	});
 
-	const fetchConsultations = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			params.append("serviceType", "consultation");
-			if (filter.category) params.append("category", filter.category);
-			if (filter.subCategory) params.append("subCategory", filter.subCategory);
-			params.append("page", filter.page);
-			params.append("limit", filter.limit);
+	// Build query params from filter
+	const queryParams = {
+		serviceType: "consultation",
+		page: filter.page,
+		limit: filter.limit,
+	};
+	if (filter.category) queryParams.category = filter.category;
+	if (filter.subCategory) queryParams.subCategory = filter.subCategory;
 
-			const response = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/services?${params.toString()}`,
-				{ withCredentials: true }
-			);
+	// Use services query hook for consultations
+	const { data: consultations = [], isLoading: loading } = useServicesQuery({
+		params: queryParams,
+	});
 
-			setConsultations(response.data.data);
-		} catch (error) {
-			console.error("Error fetching consultations:", error);
-			toast.error("Failed to fetch consultations");
-		} finally {
-			setLoading(false);
-		}
-	}, [filter]);
+	// Delete mutation hook
+	const deleteServiceMutation = useDeleteServiceMutation();
 
-	useEffect(() => {
-		fetchConsultations();
-	}, [fetchConsultations]);
-
-	const handleDelete = async (id) => {
+	const handleDelete = (id) => {
 		if (!window.confirm("Are you sure you want to delete this consultation?"))
 			return;
 
-		try {
-			await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/services/${id}`, {
-				withCredentials: true,
-			});
-			toast.success("Consultation deleted successfully");
-			fetchConsultations();
-		} catch (error) {
-			console.error("Error deleting consultation:", error);
-			toast.error("Failed to delete consultation");
-		}
+		deleteServiceMutation.mutate(id);
 	};
 
 	const handleEdit = (id) => {

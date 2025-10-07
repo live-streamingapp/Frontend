@@ -1,61 +1,58 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useAddToCartMutation } from "../hooks/useCartApi";
-
-const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import { useNavigate } from "react-router-dom";
+import { useAddToCartMutation, useCartQuery } from "../hooks/useCartApi";
+import { useServicesQuery } from "../hooks/useServicesApi";
+import { ServiceCard } from "../components/common/cards";
+import { useAppSelector } from "../store/hooks";
+import { selectCurrentUser } from "../store/slices/authSlice";
+import { ROLES } from "../utils/constants";
 
 const Services = () => {
-	const [services, setServices] = useState([]);
-	const [loading, setLoading] = useState(true);
+	const navigate = useNavigate();
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === ROLES.ASTROLOGER || currentUser?.role === ROLES.ADMIN;
+
+	const [addingToCartId, setAddingToCartId] = useState(null); // Track which service is being added
 	const [filters, setFilters] = useState({
 		category: "",
 		search: "",
 		page: 1,
 		limit: 12,
 	});
-	const [pagination, setPagination] = useState({
-		total: 0,
-		pages: 0,
-		currentPage: 1,
+
+	// Build query params from filters
+	const queryParams = {
+		...filters,
+		isActive: "true", // Only show active services
+	};
+
+	// Use services query hook
+	const { data: servicesData = [], isLoading: loading } = useServicesQuery({
+		params: queryParams,
 	});
 
-	const { mutate: addToCart, isPending: isAddingToCart } =
-		useAddToCartMutation();
+	// Extract services and pagination (if the API returns structured data)
+	const services = Array.isArray(servicesData)
+		? servicesData
+		: servicesData.data || [];
+	const pagination = servicesData.pagination || {
+		total: 0,
+		pages: 1,
+		currentPage: filters.page,
+	};
 
-	const fetchServices = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			if (filters.category) params.append("category", filters.category);
-			if (filters.search) params.append("search", filters.search);
-			params.append("page", filters.page);
-			params.append("limit", filters.limit);
-			params.append("isActive", "true"); // Only show active services
+	const { mutate: addToCart } = useAddToCartMutation();
+	const { data: cartData } = useCartQuery(undefined, {
+		skip: !currentUser || isAdmin,
+	});
 
-			const response = await axios.get(
-				`${VITE_BACKEND_URL}/services?${params.toString()}`
-			);
-
-			if (response.data.success) {
-				setServices(response.data.data);
-				setPagination({
-					total: response.data.pagination.total,
-					pages: response.data.pagination.pages,
-					currentPage: response.data.pagination.currentPage,
-				});
-			}
-		} catch (error) {
-			console.error("Error fetching services:", error);
-			toast.error(error.response?.data?.message || "Failed to fetch services");
-		} finally {
-			setLoading(false);
-		}
-	}, [filters]);
-
-	useEffect(() => {
-		fetchServices();
-	}, [fetchServices]);
+	// Check if service is in cart
+	const isServiceInCart = (serviceId) => {
+		if (!cartData?.data?.items) return false;
+		return cartData.data.items.some((item) => item.itemId?._id === serviceId);
+	};
 
 	const handleFilterChange = (key, value) => {
 		setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
@@ -67,17 +64,64 @@ const Services = () => {
 	};
 
 	const handleAddToCart = (service) => {
-		addToCart({
-			itemId: service._id,
-			itemType: "Service",
-			quantity: 1,
-		});
+		// Check if user is logged in
+		if (!currentUser) {
+			toast("Please log in to continue", { icon: "🔐" });
+			navigate("/auth/login", {
+				state: { from: { pathname: window.location.pathname } },
+			});
+			return;
+		}
+
+		// Check if already in cart
+		if (isServiceInCart(service._id)) {
+			navigate("/cart");
+			return;
+		}
+
+		// Set loading state for this specific service
+		setAddingToCartId(service._id);
+
+		// All services (consultation, package, service) from Service collection
+		// should use "Service" as itemType in cart
+		// Backend cart accepts: "Course", "Book", "Consultation", "Service"
+		// Note: "Consultation" itemType is for the Consultation model (booked consultations),
+		// while service items with serviceType="consultation" use "Service" itemType
+		const itemType = "Service";
+
+		addToCart(
+			{
+				itemId: service._id,
+				itemType: itemType,
+				quantity: 1,
+			},
+			{
+				onSuccess: () => {
+					setAddingToCartId(null);
+					// Toast is already shown by useAddToCartMutation hook
+				},
+				onError: (error) => {
+					setAddingToCartId(null);
+					toast.error(
+						error?.response?.data?.message ||
+							"Failed to add to cart. Please try again."
+					);
+				},
+			}
+		);
 	};
 
-	const getImageUrl = (imagePath) => {
-		if (!imagePath) return "/images/default-service.png";
-		if (imagePath.startsWith("http")) return imagePath;
-		return `${VITE_BACKEND_URL}/${imagePath}`;
+	const handleEdit = (service) => {
+		// Navigate to service edit page
+		navigate(`/admin/edit-service/${service._id}`);
+	};
+
+	const handleDelete = (serviceId) => {
+		if (!serviceId) return;
+		if (!window.confirm("Are you sure you want to delete this service?"))
+			return;
+		// TODO: Implement delete service mutation
+		toast.error("Delete functionality not implemented yet");
 	};
 
 	return (
@@ -150,87 +194,17 @@ const Services = () => {
 			{!loading && services.length > 0 && (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 					{services.map((service) => (
-						<div
+						<ServiceCard
 							key={service._id}
-							className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-						>
-							{/* Service Image */}
-							<div className="h-48 bg-gray-100 overflow-hidden">
-								<img
-									src={getImageUrl(service.image)}
-									alt={service.title}
-									className="w-full h-full object-cover"
-								/>
-							</div>
-
-							{/* Service Details */}
-							<div className="p-4">
-								<div className="flex items-start justify-between mb-2">
-									<h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
-										{service.title}
-									</h3>
-									<span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full ml-2 whitespace-nowrap">
-										{service.category}
-									</span>
-								</div>
-
-								<p className="text-sm text-gray-600 mb-3 line-clamp-3">
-									{service.description}
-								</p>
-
-								{/* Features */}
-								{service.features && service.features.length > 0 && (
-									<div className="mb-3">
-										<ul className="text-xs text-gray-500 space-y-1">
-											{service.features.slice(0, 3).map((feature, index) => (
-												<li key={index} className="flex items-start">
-													<span className="text-green-600 mr-1">✓</span>
-													<span className="line-clamp-1">{feature}</span>
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
-
-								{/* Duration & Delivery Time */}
-								<div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-									{service.duration && (
-										<div className="flex items-center gap-1">
-											<span>⏱️</span>
-											<span>{service.duration}</span>
-										</div>
-									)}
-									{service.deliveryTime && (
-										<div className="flex items-center gap-1">
-											<span>📅</span>
-											<span>{service.deliveryTime}</span>
-										</div>
-									)}
-								</div>
-
-								{/* Price & Add to Cart */}
-								<div className="flex items-center justify-between pt-3 border-t border-gray-100">
-									<div className="flex flex-col">
-										<span className="text-xl font-bold text-red-600">
-											₹{service.price.toLocaleString()}
-										</span>
-										{service.originalPrice &&
-											service.originalPrice > service.price && (
-												<span className="text-sm text-gray-400 line-through">
-													₹{service.originalPrice.toLocaleString()}
-												</span>
-											)}
-									</div>
-									<button
-										onClick={() => handleAddToCart(service)}
-										disabled={isAddingToCart}
-										className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										{isAddingToCart ? "Adding..." : "Add to Cart"}
-									</button>
-								</div>
-							</div>
-						</div>
+							service={service}
+							isAdmin={isAdmin}
+							onEdit={handleEdit}
+							onDelete={handleDelete}
+							onAddToCart={handleAddToCart}
+							isAddingToCart={addingToCartId === service._id}
+							isInCart={isServiceInCart(service._id)}
+							isDeleting={false}
+						/>
 					))}
 				</div>
 			)}
@@ -246,7 +220,7 @@ const Services = () => {
 			)}
 
 			{/* Pagination */}
-			{!loading && pagination.pages > 1 && (
+			{!loading && pagination?.pages > 1 && (
 				<div className="flex justify-center items-center gap-2">
 					<button
 						onClick={() => handlePageChange(filters.page - 1)}
@@ -256,11 +230,12 @@ const Services = () => {
 						Previous
 					</button>
 					<span className="text-gray-600">
-						Page {pagination.currentPage} of {pagination.pages}
+						Page {pagination?.currentPage ?? filters.page} of{" "}
+						{pagination?.pages ?? 1}
 					</span>
 					<button
 						onClick={() => handlePageChange(filters.page + 1)}
-						disabled={filters.page >= pagination.pages}
+						disabled={filters.page >= (pagination?.pages ?? 1)}
 						className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						Next

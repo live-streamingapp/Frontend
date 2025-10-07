@@ -10,3 +10,4 @@ export { default as PageHeader } from "./PageHeader";
 export { default as Pagination } from "./Pagination";
 export { default as SearchField } from "./SearchField";
 export { default as Tabs } from "./Tabs";
+export { default as BaseCard } from "./BaseCard";

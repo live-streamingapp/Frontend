@@ -1,10 +1,21 @@
-import { useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import ebookImg from "../../assets/ebook.png";
 import { useBooksQuery } from "../../hooks/useContentApi";
+import { useAddToCartMutation, useCartQuery } from "../../hooks/useCartApi";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { BookCard } from "../common/cards";
 
 export default function BookOverview() {
 	const navigate = useNavigate();
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === "astrologer" || currentUser?.role === "admin";
+
+	const [addingToCartId, setAddingToCartId] = useState(null);
+
 	const {
 		data: books = [],
 		isLoading,
@@ -13,28 +24,69 @@ export default function BookOverview() {
 		refetch,
 	} = useBooksQuery();
 
+	const { mutate: addToCart } = useAddToCartMutation();
+	const { data: cartData } = useCartQuery(undefined, {
+		skip: !currentUser || isAdmin,
+	});
+
 	const bannerImage = ebookImg;
-	const sanitizedBooks = useMemo(
-		() =>
-			books.map((book) => ({
-				id: book._id ?? book.id,
-				title: book.title ?? "Untitled",
-				author: book.author ?? "Unknown Author",
-				description:
-					book.shortDescription ??
-					book.description ??
-					"No description available at the moment.",
-				thumbnail: book.coverImage ?? book.image ?? book.thumbnail,
-				price: book.price
-					? `₹${book.price}`
-					: book.priceLabel ?? "Contact for pricing",
-				format: book.format ?? "Digital",
-				pageCount: book.pageCount ?? book.details?.pageCount ?? "—",
-				language: book.language ?? book.details?.language ?? "English",
-				onSelect: () => navigate(`/books/${book._id ?? book.id}`),
-			})),
-		[books, navigate]
-	);
+
+	// Check if a book is in cart
+	const isBookInCart = (bookId) => {
+		if (!cartData?.items) return false;
+		return cartData.items.some(
+			(item) =>
+				(item.itemId === bookId || item.productId === bookId) &&
+				item.itemType === "Book"
+		);
+	};
+
+	const handleAddToCart = (book, selectedLanguage) => {
+		// Check if user is logged in
+		if (!currentUser) {
+			toast("Please log in to continue", { icon: "🔐" });
+			navigate("/auth/login", {
+				state: { from: { pathname: window.location.pathname } },
+			});
+			return;
+		}
+
+		// Check if already in cart
+		if (isBookInCart(book._id || book.id)) {
+			navigate("/cart");
+			return;
+		}
+
+		// Set loading state for this specific book
+		setAddingToCartId(book._id || book.id);
+
+		const payload = {
+			itemId: book._id || book.id,
+			itemType: "Book",
+			quantity: 1,
+			additionalInfo: selectedLanguage
+				? { language: selectedLanguage }
+				: undefined,
+		};
+
+		addToCart(payload, {
+			onSuccess: () => {
+				setAddingToCartId(null);
+			},
+			onError: (error) => {
+				setAddingToCartId(null);
+				const errorMessage =
+					error?.response?.data?.message ||
+					error?.message ||
+					"Failed to add to cart. Please try again.";
+				toast.error(errorMessage);
+			},
+		});
+	};
+
+	const handleViewDetails = (book) => {
+		navigate(`/books/${book._id ?? book.id}`);
+	};
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
@@ -109,107 +161,24 @@ export default function BookOverview() {
 						</div>
 					)}
 
-					{!isLoading && !isError && sanitizedBooks.length === 0 && (
+					{!isLoading && !isError && books.length === 0 && (
 						<p className="text-center text-sm text-gray-500">
 							Our bookstore is being refreshed. Please check back soon.
 						</p>
 					)}
 
-					<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 						{!isError &&
-							sanitizedBooks.map((book) => (
-								<article
-									key={book.id}
-									className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
-								>
-									{/* Book Cover Image */}
-									<div className="aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-orange-100 to-orange-50">
-										{book.thumbnail ? (
-											<img
-												src={book.thumbnail}
-												alt={book.title}
-												className="h-full w-full object-cover transition-transform hover:scale-105"
-												loading="lazy"
-											/>
-										) : (
-											<div className="flex h-full w-full items-center justify-center">
-												<div className="text-center">
-													<svg
-														className="mx-auto h-16 w-16 text-orange-300"
-														fill="none"
-														viewBox="0 0 24 24"
-														stroke="currentColor"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-														/>
-													</svg>
-													<p className="mt-2 text-sm text-orange-400">
-														No cover
-													</p>
-												</div>
-											</div>
-										)}
-									</div>
-
-									{/* Book Content */}
-									<div className="flex flex-1 flex-col gap-4 p-6">
-										<div className="space-y-2">
-											<h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
-												{book.title}
-											</h3>
-											<p className="text-sm text-gray-600">by {book.author}</p>
-											<p className="text-sm text-gray-700 line-clamp-3">
-												{book.description}
-											</p>
-										</div>
-
-										<dl className="mt-auto grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 text-xs">
-											<div>
-												<dt className="font-medium uppercase tracking-wider text-gray-500">
-													Format
-												</dt>
-												<dd className="mt-1 text-sm font-medium text-gray-900">
-													{book.format}
-												</dd>
-											</div>
-											<div>
-												<dt className="font-medium uppercase tracking-wider text-gray-500">
-													Pages
-												</dt>
-												<dd className="mt-1 text-sm font-medium text-gray-900">
-													{book.pageCount}
-												</dd>
-											</div>
-											<div>
-												<dt className="font-medium uppercase tracking-wider text-gray-500">
-													Language
-												</dt>
-												<dd className="mt-1 text-sm font-medium text-gray-900">
-													{book.language}
-												</dd>
-											</div>
-											<div>
-												<dt className="font-medium uppercase tracking-wider text-gray-500">
-													Price
-												</dt>
-												<dd className="mt-1 text-lg font-bold text-orange-600">
-													{book.price}
-												</dd>
-											</div>
-										</dl>
-
-										<button
-											onClick={book.onSelect}
-											className="mt-4 w-full rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600"
-										>
-											View details
-										</button>
-									</div>
-								</article>
+							books.map((book) => (
+								<BookCard
+									key={book._id || book.id}
+									book={book}
+									onViewDetails={handleViewDetails}
+									onAddToCart={handleAddToCart}
+									isAddingToCart={addingToCartId === (book._id || book.id)}
+									isInCart={isBookInCart(book._id || book.id)}
+									isAdmin={isAdmin}
+								/>
 							))}
 					</div>
 				</section>

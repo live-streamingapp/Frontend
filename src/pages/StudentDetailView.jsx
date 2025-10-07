@@ -16,6 +16,7 @@ const TABS = [
 	{ key: "basicDetails", label: "Basic Details" },
 	{ key: "courseProgress", label: "Course Progress" },
 	{ key: "bookingHistory", label: "Booking History" },
+	{ key: "studentOrders", label: "Orders" },
 	// { key: "reportsDownload", label: "Reports Download" },
 ];
 
@@ -28,7 +29,7 @@ export default function StudentDetailView() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [page, setPage] = useState(1);
 
-	// Fetch student data
+	// Fetch student data (includes orders)
 	const {
 		data: userData,
 		isLoading: isUserLoading,
@@ -71,6 +72,8 @@ export default function StudentDetailView() {
 		() => progressData?.progress ?? [],
 		[progressData]
 	);
+	// Get orders from customer data (no separate API call needed)
+	const orders = React.useMemo(() => userData?.orders ?? [], [userData]);
 
 	// Filter reports by search term
 	const filteredReports = React.useMemo(() => {
@@ -140,6 +143,7 @@ export default function StudentDetailView() {
 		basicDetails: 0,
 		courseProgress: progress.length,
 		bookingHistory: bookings.length,
+		studentOrders: orders.length,
 		reportsDownload: reports.length,
 	};
 
@@ -236,6 +240,124 @@ export default function StudentDetailView() {
 					isFetching={isBookingsFetching}
 					isError={isBookingsError}
 				/>
+			)}
+			{activeTab === "studentOrders" && (
+				<section className="relative space-y-4">
+					{isUserLoading ? (
+						<LoadingOverlay message="Loading orders..." />
+					) : isUserError ? (
+						<p className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-red-700">
+							Failed to load orders. Please try again.
+						</p>
+					) : orders.length === 0 ? (
+						<p className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500">
+							No orders found for this student.
+						</p>
+					) : (
+						<div className="overflow-hidden rounded-xl border border-[#E1E1E1] bg-white">
+							<div className="overflow-x-auto">
+								<table className="w-full min-w-[900px] text-sm">
+									<thead className="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+										<tr>
+											<th className="p-3">Order #</th>
+											<th className="p-3">Items</th>
+											<th className="p-3">Total</th>
+											<th className="p-3">Status</th>
+											<th className="p-3">Payment</th>
+											<th className="p-3">Date</th>
+											<th className="p-3 text-right">Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										{orders.map((order) => (
+											<tr
+												key={order._id}
+												className="border-t border-[#E1E1E1] text-gray-700 hover:bg-gray-50"
+											>
+												<td className="p-3 font-medium text-gray-900">
+													{order.orderNumber}
+												</td>
+												<td className="p-3">
+													<div className="space-y-1">
+														{order.items && order.items.length > 0 ? (
+															order.items.map((item, idx) => (
+																<div key={idx} className="text-xs">
+																	<span className="font-medium">
+																		{item.title || "N/A"}
+																	</span>
+																	<span className="text-gray-500 ml-1">
+																		({item.itemType})
+																	</span>
+																</div>
+															))
+														) : (
+															<span className="text-xs text-gray-400">
+																No items
+															</span>
+														)}
+													</div>
+												</td>
+												<td className="p-3 font-semibold text-gray-900">
+													₹{order.totalAmount?.toLocaleString() || 0}
+												</td>
+												<td className="p-3">
+													<span
+														className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+															order.status === "completed"
+																? "bg-green-100 text-green-800"
+																: order.status === "accepted"
+																? "bg-blue-100 text-blue-800"
+																: order.status === "declined"
+																? "bg-red-100 text-red-800"
+																: order.status === "cancelled"
+																? "bg-gray-100 text-gray-800"
+																: "bg-yellow-100 text-yellow-800"
+														}`}
+													>
+														{order.status || "pending"}
+													</span>
+												</td>
+												<td className="p-3">
+													<span
+														className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+															order.paymentStatus === "paid"
+																? "bg-green-100 text-green-800"
+																: order.paymentStatus === "failed"
+																? "bg-red-100 text-red-800"
+																: order.paymentStatus === "refunded"
+																? "bg-purple-100 text-purple-800"
+																: "bg-yellow-100 text-yellow-800"
+														}`}
+													>
+														{order.paymentStatus || "pending"}
+													</span>
+												</td>
+												<td className="p-3 text-xs text-gray-600">
+													{formatDate(order.createdAt)}
+												</td>
+												<td className="p-3 text-right">
+													<button
+														type="button"
+														onClick={() =>
+															navigate(`/admin/orders/${order._id}`)
+														}
+														className="inline-flex items-center justify-center rounded-md px-3 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+														style={{
+															background:
+																"linear-gradient(to right, #BB0E00, #B94400)",
+														}}
+													>
+														View Details
+													</button>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					)}
+				</section>
 			)}
 			{activeTab === "reportsDownload" && (
 				<section className="relative space-y-4">

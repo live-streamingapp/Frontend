@@ -1,11 +1,14 @@
-import React, { useMemo } from "react";
-import { FaTicketAlt, FaChevronRight } from "react-icons/fa";
-import rudrakshImg from "../../assets/rudraksh.png";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import rudrakshImg from "../../assets/rudraksh.png";
 import {
 	useCartQuery,
 	useRemoveCartItemMutation,
 } from "../../hooks/useCartApi";
+
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getDisplayImage = (item) => {
 	if (item.imageUrl) return item.imageUrl;
@@ -22,16 +25,76 @@ const getDisplayImage = (item) => {
 
 export default function ReviewCart() {
 	const navigate = useNavigate();
-	const { data, isLoading, isError, error } = useCartQuery();
+	const { data, isLoading, isError, error, refetch } = useCartQuery();
 	const { mutate: removeCartItem, isPending } = useRemoveCartItemMutation({
 		showSuccessToast: true,
 	});
+
+	const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
 	const items = useMemo(() => data?.items ?? [], [data]);
 	const totals = useMemo(
 		() => data?.totals ?? { totalMRP: 0, discount: 0, totalAmount: 0 },
 		[data]
 	);
+
+	const handleCreateOrder = async () => {
+		// Validate cart has items
+		if (!items || items.length === 0) {
+			toast.error("Your cart is empty");
+			return;
+		}
+
+		// Show confirmation alert
+		const confirmed = window.confirm(
+			`Are you sure you want to place an order for ₹${totals.totalAmount.toLocaleString()}?\n\nPayment gateway integration will be added soon.`
+		);
+
+		if (!confirmed) {
+			return;
+		}
+
+		try {
+			setIsProcessingOrder(true);
+
+			// Prepare order items from cart
+			const orderItems = items.map((item) => ({
+				itemId: item.itemId || item.productId,
+				itemType: item.itemType || item.kind || "Product",
+				quantity: item.quantity || 1,
+				price: item.price,
+			}));
+
+			// Create order with pending payment status
+			const orderResponse = await axios.post(
+				`${VITE_BACKEND_URL}/orders`,
+				{
+					items: orderItems,
+					paymentMethod: "pending", // Will be set by payment gateway
+					paymentStatus: "pending", // Set payment status to pending
+					clearCart: true, // Clear cart after order creation
+				},
+				{
+					withCredentials: true,
+				}
+			);
+
+			if (orderResponse.data.success) {
+				toast.success("Order placed successfully! Payment is pending.");
+				refetch(); // Refresh cart to show it's empty
+				navigate("/my-orders"); // Redirect to orders page
+			}
+		} catch (error) {
+			console.error("Order creation error:", error);
+			const message =
+				error.response?.data?.message ||
+				error.message ||
+				"Failed to create order. Please try again.";
+			toast.error(message);
+		} finally {
+			setIsProcessingOrder(false);
+		}
+	};
 
 	if (isLoading) {
 		return <p className="text-center mt-4">Loading cart...</p>;
@@ -92,16 +155,13 @@ export default function ReviewCart() {
 							</div>
 						</div>
 					</div>
-					<div className="px-4 pb-4 gap-3 flex">
+					<div className="px-4 pb-4">
 						<button
 							onClick={() => removeCartItem({ productId: item.productId })}
-							disabled={isPending}
-							className="w-40 py-2 rounded bg-[#ba3400] text-white font-medium mb-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+							disabled={isPending || isProcessingOrder}
+							className="w-40 py-2 rounded bg-[#ba3400] text-white font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{isPending ? "Removing..." : "Remove"}
-						</button>
-						<button className="w-40 py-2 rounded border-2 border-[#ba3400] text-[#bb0e00] font-medium mb-2 hover:opacity-90">
-							Move to Wishlist
 						</button>
 					</div>
 				</div>
@@ -109,13 +169,6 @@ export default function ReviewCart() {
 
 			{/* Totals Section */}
 			<div className="rounded-2xl shadow-md bg-white">
-				<div className="flex items-center justify-between mx-4 p-3 rounded-lg border-gray-400 border mt-3">
-					<div className="flex items-center gap-4 text-gray-700 font-medium">
-						<FaTicketAlt className="text-[#ba3400]" />
-						<span>Coupon Code</span>
-					</div>
-					<FaChevronRight className="text-gray-500" />
-				</div>
 				<div className="p-4 text-sm">
 					<h3 className="font-semibold text-gray-600 mb-3">Product Details</h3>
 					<div className="flex justify-between mb-2">
@@ -141,11 +194,18 @@ export default function ReviewCart() {
 
 			<div className="flex justify-center mt-4">
 				<button
-					onClick={() => navigate("/payment")}
-					disabled={isPending}
+					onClick={handleCreateOrder}
+					disabled={isPending || isProcessingOrder}
 					className="bg-[#ba3400] text-white py-2 px-6 rounded text-lg font-medium shadow-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					Continue Payment
+					{isProcessingOrder ? (
+						<span className="flex items-center justify-center gap-2">
+							<div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+							Creating Order...
+						</span>
+					) : (
+						"Continue to Payment"
+					)}
 				</button>
 			</div>
 		</div>

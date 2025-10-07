@@ -1,46 +1,40 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React from "react";
 import BlogCard from "../Blogs/BlogCard";
 import { IoIosArrowRoundForward } from "react-icons/io";
 import { LoadingSpinner, ErrorMessage, Button } from "../common";
+import { useBlogsQuery } from "../../hooks/useContentApi";
+import { useNavigate } from "react-router-dom";
 
 const Blogs = () => {
-	const [blogs, setBlogs] = useState([]);
-	const [visibleCards, setVisibleCards] = useState(6);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const navigate = useNavigate();
+	const { data: blogsData = [], isLoading, error } = useBlogsQuery();
 
-	const fetchBlogs = async () => {
-		try {
-			setLoading(true);
-			setError(null);
-			const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/blogs`, {
-				withCredentials: true,
-			});
+	// Limit to 3 blogs for home page
+	const blogs = blogsData.slice(0, 3);
 
-			if (res.data.status) {
-				setBlogs(res.data.data);
-			} else {
-				setError("Failed to fetch blogs");
-			}
-		} catch (err) {
-			console.error("Error fetching blogs:", err);
-			setError("Failed to fetch blogs. Please try again.");
-		} finally {
-			setLoading(false);
-		}
+	const handleViewAll = () => {
+		navigate("/blogs");
 	};
 
-	useEffect(() => {
-		fetchBlogs();
-	}, []);
-
-	if (loading) {
+	if (isLoading) {
 		return <LoadingSpinner message="Loading blogs..." />;
 	}
 
 	if (error) {
-		return <ErrorMessage message={error} onRetry={fetchBlogs} />;
+		return <ErrorMessage message="Failed to fetch blogs. Please try again." />;
+	}
+
+	if (blogs.length === 0) {
+		return (
+			<div className="px-4 sm:px-8 md:px-12 lg:px-14 py-6 sm:py-8">
+				<h1 className="my-6 sm:my-8 text-xl sm:text-2xl text-center font-semibold">
+					Latest Blogs
+				</h1>
+				<div className="text-center text-gray-600">
+					No blogs available at the moment.
+				</div>
+			</div>
+		);
 	}
 
 	return (
@@ -51,26 +45,22 @@ const Blogs = () => {
 				</h1>
 
 				<div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-					{blogs.slice(0, visibleCards).map((blog) => (
+					{blogs.map((blog) => (
 						<BlogCard key={blog._id} blog={blog} />
 					))}
 				</div>
 
-				{/* View All / View Less */}
-				{blogs.length > visibleCards ? (
+				{/* View All Button - only show if there are more than 3 blogs */}
+				{blogsData.length > 3 && (
 					<div className="flex items-center justify-center my-6 sm:my-8">
 						<Button
-							onClick={() => setVisibleCards(blogs.length)}
+							onClick={handleViewAll}
 							icon={<IoIosArrowRoundForward size={24} />}
 						>
-							View All
+							View All Blogs
 						</Button>
 					</div>
-				) : blogs.length > 6 ? (
-					<div className="flex items-center justify-center my-6 sm:my-8">
-						<Button onClick={() => setVisibleCards(6)}>View Less</Button>
-					</div>
-				) : null}
+				)}
 			</div>
 		</>
 	);

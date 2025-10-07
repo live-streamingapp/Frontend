@@ -128,6 +128,9 @@ export const useStudentProgressQuery = (studentId = null, options = {}) => {
 	});
 };
 
+// NOTE: useStudentOrdersQuery has been removed because orders are now included
+// in the useCustomerByIdQuery response, eliminating the need for a separate API call
+
 export const useAdminEventsQuery = (options = {}) => {
 	const {
 		onError,
@@ -218,7 +221,15 @@ export const useCustomerByIdQuery = (customerId, options = {}) => {
 		queryKey,
 		queryFn: async () => {
 			const response = await apiClient.get(`/admin/customers/${customerId}`);
-			return response.data?.data ?? {};
+			const customerData = response.data?.data ?? {};
+
+			// Extract orders from customer data if they exist
+			const orders = customerData.orders ?? [];
+
+			return {
+				...customerData,
+				orders, // Include orders in the returned data
+			};
 		},
 		enabled: !!customerId,
 		staleTime: 1000 * 60,
@@ -252,6 +263,85 @@ export const useCustomerOrdersQuery = (customerId, options = {}) => {
 			const orders = response.data?.data?.orders ?? [];
 			const count = response.data?.data?.count ?? orders.length;
 			return { orders, count };
+		},
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
+// Dashboard Stats Hooks
+export const useDashboardOrdersQuery = (options = {}) => {
+	const {
+		onError,
+		queryKey = ["admin", "dashboard", "orders"],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get("/orders");
+			const orders = response.data?.data ?? [];
+
+			// Calculate order stats
+			const pending = orders.filter((o) => o.status === "pending").length;
+			const completed = orders.filter((o) => o.status === "completed").length;
+			const totalRevenue = orders
+				.filter((o) => o.paymentStatus === "paid")
+				.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+			return {
+				orders,
+				total: orders.length,
+				pending,
+				completed,
+				revenue: totalRevenue,
+				recentOrders: orders.slice(0, 5),
+			};
+		},
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
+export const useDashboardCoursesQuery = (options = {}) => {
+	const {
+		onError,
+		queryKey = ["admin", "dashboard", "courses"],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get("/courses");
+			const courses = response.data || [];
+
+			// Calculate total enrolled students across all courses
+			const totalEnrolled = courses.reduce(
+				(sum, course) => sum + (course.enrolledStudents?.length || 0),
+				0
+			);
+
+			return {
+				courses,
+				total: courses.length,
+				enrolled: totalEnrolled,
+			};
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {

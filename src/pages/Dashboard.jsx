@@ -7,44 +7,70 @@ import {
 	CartesianGrid,
 	Tooltip,
 	ResponsiveContainer,
+	LineChart,
+	Line,
+	PieChart,
+	Pie,
+	Cell,
 } from "recharts";
 import {
 	FaBell,
 	FaChevronLeft,
 	FaChevronRight,
-	FaDollarSign,
 	FaRupeeSign,
-	FaStar,
 	FaUser,
+	FaShoppingCart,
+	FaBook,
+	FaGraduationCap,
+	FaClock,
+	FaCheckCircle,
+	FaSpinner,
+	FaTimes,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import {
 	useAdminEnquiriesQuery,
 	useAdminEventsQuery,
 	useAdminUsersQuery,
+	useDashboardOrdersQuery,
+	useDashboardCoursesQuery,
 } from "../hooks/useAdminApi";
 
-const chartData = [
-	{ name: "JAN", revenue: 20, total: 30 },
-	{ name: "FEB", revenue: 25, total: 32 },
-	{ name: "MAR", revenue: 15, total: 48 },
-	{ name: "APR", revenue: 18, total: 28 },
-	{ name: "MAY", revenue: 32, total: 42 },
-	{ name: "JUN", revenue: 17, total: 31 },
-	{ name: "JUL", revenue: 38, total: 45 },
-	{ name: "AUG", revenue: 28, total: 34 },
-];
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 const Dashboard = () => {
 	const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+	// Use dashboard data hooks
 	const { data: eventsData, isLoading: eventsLoading } = useAdminEventsQuery();
 	const { data: userStats } = useAdminUsersQuery();
 	const { data: enquiriesData, isLoading: enquiriesLoading } =
 		useAdminEnquiriesQuery();
+	const { data: ordersData, isLoading: ordersLoading } =
+		useDashboardOrdersQuery();
+	const { data: coursesData, isLoading: coursesLoading } =
+		useDashboardCoursesQuery();
 
+	// Extract data with defaults
 	const events = useMemo(() => eventsData ?? [], [eventsData]);
-	const enquiries = enquiriesData ?? [];
+	const enquiries = (enquiriesData ?? []).slice(0, 5); // Show only 5 recent
 	const users = userStats?.count ?? 0;
+	const loading = ordersLoading || coursesLoading;
+
+	// Order status distribution for pie chart
+	const orderStatusData = useMemo(() => {
+		if (!ordersData?.recentOrders?.length) return [];
+
+		const statusCount = ordersData.recentOrders.reduce((acc, order) => {
+			acc[order.status] = (acc[order.status] || 0) + 1;
+			return acc;
+		}, {});
+
+		return Object.entries(statusCount).map(([status, count]) => ({
+			name: status.charAt(0).toUpperCase() + status.slice(1),
+			value: count,
+		}));
+	}, [ordersData?.recentOrders]);
 
 	useEffect(() => {
 		if (events.length === 0) {
@@ -92,115 +118,240 @@ const Dashboard = () => {
 				</div>
 
 				{/* Stats Cards */}
-				<div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-					{[
-						{
-							count: users,
-							label: "Total Users",
-							// change: "+45 users",
-							gradient: "from-indigo-400 via-blue-500 to-blue-600",
-							footer: "from-blue-600 to-blue-700",
-							icon: <FaUser />,
-						},
-
-						{
-							count: "₹2.5L",
-							label: "Monthly Revenue",
-							// change: "+12%",
-							gradient: "from-emerald-400 via-green-500 to-green-600",
-							footer: "from-green-600 to-green-700",
-							icon: <FaRupeeSign />,
-						},
-					].map((card, i) => (
-						<div
-							key={i}
-							className="rounded-2xl border border-gray-200 bg-white flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200"
-						>
-							<div className="flex flex-1 items-center justify-center p-4 sm:p-6">
-								<div className="flex items-center gap-3 sm:gap-4">
-									<div
-										className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr ${card.gradient} flex items-center justify-center shadow-lg`}
-									>
-										<span className="text-white text-lg sm:text-xl">
-											{card.icon}
-										</span>
-									</div>
-									<div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-										<span className="font-bold text-gray-900 text-2xl sm:text-3xl lg:text-4xl">
-											{card.count}
-										</span>
-									</div>
+				<div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+					{/* Total Users */}
+					<Link
+						to="/admin/student-management"
+						className="rounded-2xl border border-gray-200 bg-white flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200"
+					>
+						<div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+							<div className="flex items-center gap-3 sm:gap-4">
+								<div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-indigo-400 via-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+									<FaUser className="text-white text-lg sm:text-xl" />
 								</div>
-							</div>
-							<div
-								className={`w-full h-12 sm:h-14 bg-gradient-to-r ${card.footer} flex items-center justify-between px-4 sm:px-6 rounded-b-2xl`}
-							>
-								<span className="text-white font-semibold text-sm sm:text-base">
-									{card.label}
-								</span>
-								<span className="text-white text-lg">→</span>
+								<div className="flex flex-col">
+									<span className="font-bold text-gray-900 text-2xl sm:text-3xl">
+										{users}
+									</span>
+									<span className="text-xs text-gray-500">Registered</span>
+								</div>
 							</div>
 						</div>
-					))}
-				</div>
+						<div className="w-full h-12 sm:h-14 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-4 sm:px-6 rounded-b-2xl">
+							<span className="text-white font-semibold text-sm sm:text-base">
+								Total Users
+							</span>
+							<span className="text-white text-lg">→</span>
+						</div>
+					</Link>
 
-				{/* Product Sales + Chart */}
-				<div className="flex flex-col xl:flex-row justify-between gap-6 mt-8 sm:mt-12">
-					{/* Product Cards */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-						{[
-							{ name: "Gemstones", sales: "₹45,000", icon: "💎" },
-							{ name: "Astrology", sales: "₹32,000", icon: "⭐" },
-							{ name: "Numerology", sales: "₹28,000", icon: "🔢" },
-							{ name: "Consultations", sales: "₹55,000", icon: "🔮" },
-						].map((product, i) => (
-							<div
-								key={i}
-								className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200 flex items-center gap-3"
-							>
-								<div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center text-lg">
-									{product.icon}
+					{/* Total Revenue */}
+					<Link
+						to="/admin/orders"
+						className="rounded-2xl border border-gray-200 bg-white flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200"
+					>
+						<div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+							<div className="flex items-center gap-3 sm:gap-4">
+								<div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-emerald-400 via-green-500 to-green-600 flex items-center justify-center shadow-lg">
+									<FaRupeeSign className="text-white text-lg sm:text-xl" />
 								</div>
-								<div className="flex-1">
-									<p className="font-semibold text-gray-800 text-sm sm:text-base">
-										{product.name}
-									</p>
-									<p className="font-bold text-gray-900 text-lg sm:text-xl">
-										{product.sales}{" "}
-										<span className="text-xs text-gray-500 font-normal">
-											Sales
-										</span>
-									</p>
+								<div className="flex flex-col">
+									<span className="font-bold text-gray-900 text-2xl sm:text-3xl">
+										{loading
+											? "..."
+											: `₹${((ordersData?.revenue ?? 0) / 1000).toFixed(1)}K`}
+									</span>
+									<span className="text-xs text-gray-500">Paid Orders</span>
 								</div>
 							</div>
-						))}
+						</div>
+						<div className="w-full h-12 sm:h-14 bg-gradient-to-r from-green-600 to-green-700 flex items-center justify-between px-4 sm:px-6 rounded-b-2xl">
+							<span className="text-white font-semibold text-sm sm:text-base">
+								Total Revenue
+							</span>
+							<span className="text-white text-lg">→</span>
+						</div>
+					</Link>
+
+					{/* Total Orders */}
+					<Link
+						to="/admin/orders"
+						className="rounded-2xl border border-gray-200 bg-white flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200"
+					>
+						<div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+							<div className="flex items-center gap-3 sm:gap-4">
+								<div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-purple-400 via-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+									<FaShoppingCart className="text-white text-lg sm:text-xl" />
+								</div>
+								<div className="flex flex-col">
+									<span className="font-bold text-gray-900 text-2xl sm:text-3xl">
+										{loading ? "..." : ordersData?.total ?? 0}
+									</span>
+									<span className="text-xs text-gray-500">
+										{loading ? "..." : `${ordersData?.pending ?? 0} Pending`}
+									</span>
+								</div>
+							</div>
+						</div>
+						<div className="w-full h-12 sm:h-14 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-4 sm:px-6 rounded-b-2xl">
+							<span className="text-white font-semibold text-sm sm:text-base">
+								Total Orders
+							</span>
+							<span className="text-white text-lg">→</span>
+						</div>
+					</Link>
+
+					{/* Total Courses */}
+					<Link
+						to="/admin/courses"
+						className="rounded-2xl border border-gray-200 bg-white flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200"
+					>
+						<div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+							<div className="flex items-center gap-3 sm:gap-4">
+								<div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+									<FaGraduationCap className="text-white text-lg sm:text-xl" />
+								</div>
+								<div className="flex flex-col">
+									<span className="font-bold text-gray-900 text-2xl sm:text-3xl">
+										{loading ? "..." : coursesData?.total ?? 0}
+									</span>
+									<span className="text-xs text-gray-500">
+										{loading ? "..." : `${coursesData?.enrolled ?? 0} Enrolled`}
+									</span>
+								</div>
+							</div>
+						</div>
+						<div className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-600 to-orange-700 flex items-center justify-between px-4 sm:px-6 rounded-b-2xl">
+							<span className="text-white font-semibold text-sm sm:text-base">
+								Total Courses
+							</span>
+							<span className="text-white text-lg">→</span>
+						</div>
+					</Link>
+				</div>
+
+				{/* Recent Orders + Order Status Chart */}
+				<div className="flex flex-col xl:flex-row justify-between gap-6 mt-8 sm:mt-12">
+					{/* Recent Orders */}
+					<div className="flex-1 bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+						<div className="flex items-center justify-between mb-4">
+							<h3 className="text-lg font-semibold text-gray-800">
+								Recent Orders
+							</h3>
+							<Link
+								to="/admin/orders"
+								className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+							>
+								View All →
+							</Link>
+						</div>
+
+						{loading ? (
+							<div className="flex items-center justify-center py-8">
+								<FaSpinner className="animate-spin text-blue-600 text-2xl" />
+							</div>
+						) : !ordersData?.recentOrders?.length ? (
+							<p className="text-gray-500 text-center py-8">No orders yet</p>
+						) : (
+							<div className="space-y-3">
+								{ordersData.recentOrders.map((order) => (
+									<Link
+										key={order._id}
+										to={`/admin/orders`}
+										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+									>
+										<div className="flex items-center justify-between mb-2">
+											<span className="font-semibold text-gray-800 text-sm">
+												{order.orderNumber}
+											</span>
+											<span
+												className={`px-2 py-1 rounded text-xs font-medium ${
+													order.status === "completed"
+														? "bg-green-100 text-green-800"
+														: order.status === "pending"
+														? "bg-yellow-100 text-yellow-800"
+														: order.status === "cancelled"
+														? "bg-red-100 text-red-800"
+														: "bg-blue-100 text-blue-800"
+												}`}
+											>
+												{order.status}
+											</span>
+										</div>
+										<div className="flex items-center justify-between text-sm">
+											<span className="text-gray-600">
+												{order.user?.name || "Guest"}
+											</span>
+											<span className="font-bold text-gray-900">
+												₹{order.totalAmount}
+											</span>
+										</div>
+										<div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+											<FaClock className="text-xs" />
+											{new Date(order.createdAt).toLocaleDateString()}
+										</div>
+									</Link>
+								))}
+							</div>
+						)}
 					</div>
 
-					{/* Chart */}
-					<div className="flex-1 bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 min-h-[300px]">
+					{/* Order Status Distribution */}
+					<div className="flex-1 bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
 						<h3 className="text-lg font-semibold text-gray-800 mb-4">
-							Revenue Analytics
+							Order Status Distribution
 						</h3>
-						<ResponsiveContainer width="100%" height={250}>
-							<BarChart
-								data={chartData}
-								margin={{ top: 10, right: 20, bottom: 5, left: 0 }}
-							>
-								<CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-								<XAxis dataKey="name" tick={{ fontSize: 12 }} />
-								<YAxis tick={{ fontSize: 12 }} />
-								<Tooltip
-									contentStyle={{
-										borderRadius: "8px",
-										border: "1px solid #e5e7eb",
-										backgroundColor: "white",
-									}}
-									labelStyle={{ fontWeight: "bold", color: "#374151" }}
-								/>
-								<Bar dataKey="total" fill="#93c5fd" radius={[4, 4, 0, 0]} />
-								<Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-							</BarChart>
-						</ResponsiveContainer>
+
+						{loading ? (
+							<div className="flex items-center justify-center py-12">
+								<FaSpinner className="animate-spin text-blue-600 text-2xl" />
+							</div>
+						) : orderStatusData.length === 0 ? (
+							<p className="text-gray-500 text-center py-12">
+								No data available
+							</p>
+						) : (
+							<>
+								<ResponsiveContainer width="100%" height={200}>
+									<PieChart>
+										<Pie
+											data={orderStatusData}
+											cx="50%"
+											cy="50%"
+											labelLine={false}
+											label={(entry) => `${entry.name}: ${entry.value}`}
+											outerRadius={80}
+											fill="#8884d8"
+											dataKey="value"
+										>
+											{orderStatusData.map((entry, index) => (
+												<Cell
+													key={`cell-${index}`}
+													fill={COLORS[index % COLORS.length]}
+												/>
+											))}
+										</Pie>
+										<Tooltip />
+									</PieChart>
+								</ResponsiveContainer>
+
+								{/* Legend */}
+								<div className="grid grid-cols-2 gap-3 mt-4">
+									<div className="flex items-center gap-2">
+										<FaClock className="text-yellow-600" />
+										<span className="text-sm text-gray-600">
+											Pending: {ordersData?.pending ?? 0}
+										</span>
+									</div>
+									<div className="flex items-center gap-2">
+										<FaCheckCircle className="text-green-600" />
+										<span className="text-sm text-gray-600">
+											Completed: {ordersData?.completed ?? 0}
+										</span>
+									</div>
+								</div>
+							</>
+						)}
 					</div>
 				</div>
 

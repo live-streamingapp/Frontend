@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import ProductCard from "./ProductCard";
+import { useNavigate } from "react-router-dom";
+import { ProductCard } from "../common/cards";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { ROLES } from "../../utils/constants";
 import apiClient from "../../utils/apiClient";
 import product1 from "../../assets/product1.png";
 import product2 from "../../assets/product2.png";
@@ -17,6 +21,11 @@ const categories = [
 ];
 
 const Products = () => {
+	const navigate = useNavigate();
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === ROLES.ASTROLOGER || currentUser?.role === ROLES.ADMIN;
+
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [searchQuery, setSearchQuery] = useState("");
 
@@ -43,6 +52,17 @@ const Products = () => {
 			.includes(searchQuery.toLowerCase());
 		return matchesCategory && matchesSearch && product.isActive;
 	});
+
+	const handleEdit = (product) => {
+		navigate(`/admin/edit-product/${product._id}`);
+	};
+
+	const handleDelete = (productId) => {
+		if (!window.confirm("Are you sure you want to delete this product?"))
+			return;
+		// TODO: Implement delete mutation
+		console.log("Delete product:", productId);
+	};
 
 	return (
 		<div className="px-[1rem] py-6">
@@ -143,7 +163,14 @@ const Products = () => {
 					{filteredProducts.length > 0 ? (
 						<div className="flex gap-[1rem] flex-wrap justify-center px-[1rem]">
 							{filteredProducts.map((product) => (
-								<ProductCard key={product._id} product={product} />
+								<ProductCard
+									key={product._id}
+									product={product}
+									isAdmin={isAdmin}
+									onEdit={handleEdit}
+									onDelete={handleDelete}
+									layout="horizontal"
+								/>
 							))}
 						</div>
 					) : (

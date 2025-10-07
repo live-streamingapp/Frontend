@@ -6,6 +6,10 @@ import {
 	useDeleteBookMutation,
 	useUpdateBookMutation,
 } from "../../hooks/useBooksApi";
+import { BookCard } from "../common/cards";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { ROLES } from "../../utils/constants";
 
 const DEFAULT_HIGHLIGHTS = {
 	whyThisBook: "",
@@ -64,6 +68,9 @@ const normalizeBookForEditing = (book) => {
 const BooksList = () => {
 	const navigate = useNavigate();
 	const { data: books = [], isLoading, isError } = useBooksQuery();
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === ROLES.ASTROLOGER || currentUser?.role === ROLES.ADMIN;
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedBook, setSelectedBook] = useState(null);
@@ -343,45 +350,14 @@ const BooksList = () => {
 							deleteBookMutation.isPending && deletingBookId === id;
 
 						return (
-							<div
+							<BookCard
 								key={id}
-								className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col"
-							>
-								<img
-									src={book.coverImage}
-									alt={book.title}
-									className="w-full h-48 object-cover"
-								/>
-								<div className="p-4 flex-1 flex flex-col justify-between">
-									<div>
-										<h3 className="text-lg font-semibold mb-2">{book.title}</h3>
-										<p className="text-gray-600 text-sm mb-4 overflow-hidden">
-											{book.description}
-										</p>
-									</div>
-
-									<div className="flex justify-between items-center mt-auto">
-										<span className="text-red-600 font-bold">
-											₹{book.price}
-										</span>
-										<div className="flex gap-2">
-											<button
-												onClick={() => handleEdit(book)}
-												className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-											>
-												Edit
-											</button>
-											<button
-												onClick={() => handleDelete(id)}
-												disabled={isDeleting}
-												className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-60"
-											>
-												{isDeleting ? "Deleting..." : "Delete"}
-											</button>
-										</div>
-									</div>
-								</div>
-							</div>
+								book={book}
+								isAdmin={isAdmin}
+								onEdit={handleEdit}
+								onDelete={handleDelete}
+								isDeleting={isDeleting}
+							/>
 						);
 					})}
 				</div>

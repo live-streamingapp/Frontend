@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { FaCreditCard } from "react-icons/fa";
-import { MdLocalOffer } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -59,6 +58,15 @@ export default function Payment() {
 			return;
 		}
 
+		// Show confirmation alert
+		const confirmed = window.confirm(
+			`Are you sure you want to proceed with payment of ₹${totalAmount.toLocaleString()}?`
+		);
+
+		if (!confirmed) {
+			return;
+		}
+
 		try {
 			setIsProcessing(true);
 
@@ -70,12 +78,13 @@ export default function Payment() {
 				price: item.price,
 			}));
 
-			// Create order
+			// Create order with pending payment status
 			const orderResponse = await axios.post(
 				`${VITE_BACKEND_URL}/orders`,
 				{
 					items,
 					paymentMethod: selectedMethod,
+					paymentStatus: "pending", // Set payment status to pending
 					clearCart: true, // Clear cart after order creation
 				},
 				{
@@ -84,7 +93,7 @@ export default function Payment() {
 			);
 
 			if (orderResponse.data.success) {
-				toast.success("Order placed successfully!");
+				toast.success("Order placed successfully! Payment is pending.");
 				refetch(); // Refresh cart to show it's empty
 				navigate("/my-orders"); // Redirect to orders page
 			}
@@ -246,13 +255,6 @@ export default function Payment() {
 						/>
 					)}
 				</label>
-
-				{/* Coupon Code */}
-				<div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer">
-					<span className="flex items-center gap-2 font-medium">
-						<MdLocalOffer className="text-[#ba1f00]" /> Apply Coupon Code
-					</span>
-				</div>
 
 				{/* Confirm Payment Button */}
 				<button

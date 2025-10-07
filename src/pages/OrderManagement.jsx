@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { useState } from "react";
+import {
+	useOrdersQuery,
+	useUpdateOrderStatusMutation,
+	useUpdatePaymentStatusMutation,
+} from "../hooks/useOrdersApi";
 
 const OrderManagement = () => {
-	const [orders, setOrders] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState({
 		status: "",
 		itemType: "",
@@ -12,51 +13,36 @@ const OrderManagement = () => {
 		page: 1,
 		limit: 10,
 	});
-	const [pagination, setPagination] = useState(null);
 
-	const fetchOrders = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			if (filter.status) params.append("status", filter.status);
-			if (filter.itemType) params.append("itemType", filter.itemType);
-			if (filter.paymentStatus)
-				params.append("paymentStatus", filter.paymentStatus);
-			params.append("page", filter.page);
-			params.append("limit", filter.limit);
+	// Build query params from filter
+	const queryParams = {};
+	if (filter.status) queryParams.status = filter.status;
+	if (filter.itemType) queryParams.itemType = filter.itemType;
+	if (filter.paymentStatus) queryParams.paymentStatus = filter.paymentStatus;
+	queryParams.page = filter.page;
+	queryParams.limit = filter.limit;
 
-			const response = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/orders?${params.toString()}`,
-				{ withCredentials: true }
-			);
+	// Use the orders query hook
+	const { data: ordersData, isLoading: loading } = useOrdersQuery({
+		params: queryParams,
+	});
 
-			setOrders(response.data.data);
-			setPagination(response.data.pagination);
-		} catch (error) {
-			console.error("Error fetching orders:", error);
-			toast.error("Failed to fetch orders");
-		} finally {
-			setLoading(false);
-		}
-	}, [filter]);
+	const orders = ordersData?.data ?? [];
+	const pagination = ordersData?.pagination;
 
-	useEffect(() => {
-		fetchOrders();
-	}, [fetchOrders]);
+	// Mutation hooks for status updates
+	const updateOrderStatusMutation = useUpdateOrderStatusMutation();
+	const updatePaymentStatusMutation = useUpdatePaymentStatusMutation();
 
-	const handleStatusUpdate = async (orderId, newStatus) => {
-		try {
-			await axios.put(
-				`${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/status`,
-				{ status: newStatus },
-				{ withCredentials: true }
-			);
-			toast.success("Order status updated successfully");
-			fetchOrders();
-		} catch (error) {
-			console.error("Error updating order status:", error);
-			toast.error("Failed to update order status");
-		}
+	const handleStatusUpdate = (orderId, newStatus) => {
+		updateOrderStatusMutation.mutate({ orderId, status: newStatus });
+	};
+
+	const handlePaymentStatusUpdate = (orderId, newPaymentStatus) => {
+		updatePaymentStatusMutation.mutate({
+			orderId,
+			paymentStatus: newPaymentStatus,
+		});
 	};
 
 	const getStatusColor = (status) => {
@@ -206,19 +192,46 @@ const OrderManagement = () => {
 										{new Date(order.createdAt).toLocaleDateString()}
 									</td>
 									<td className="px-4 py-3">
-										<select
-											value={order.status}
-											onChange={(e) =>
-												handleStatusUpdate(order._id, e.target.value)
-											}
-											className="border rounded px-2 py-1 text-sm"
-										>
-											<option value="pending">Pending</option>
-											<option value="accepted">Accept</option>
-											<option value="declined">Decline</option>
-											<option value="completed">Complete</option>
-											<option value="cancelled">Cancel</option>
-										</select>
+										<div className="space-y-2">
+											{/* Order Status */}
+											<div>
+												<label className="text-xs text-gray-600 block mb-1">
+													Order Status
+												</label>
+												<select
+													value={order.status}
+													onChange={(e) =>
+														handleStatusUpdate(order._id, e.target.value)
+													}
+													className="border rounded px-2 py-1 text-sm w-full"
+												>
+													<option value="pending">Pending</option>
+													<option value="accepted">Accept</option>
+													<option value="declined">Decline</option>
+													<option value="completed">Complete</option>
+													<option value="cancelled">Cancel</option>
+												</select>
+											</div>
+
+											{/* Payment Status */}
+											<div>
+												<label className="text-xs text-gray-600 block mb-1">
+													Payment Status
+												</label>
+												<select
+													value={order.paymentStatus}
+													onChange={(e) =>
+														handlePaymentStatusUpdate(order._id, e.target.value)
+													}
+													className="border rounded px-2 py-1 text-sm w-full"
+												>
+													<option value="pending">Pending</option>
+													<option value="paid">Paid</option>
+													<option value="failed">Failed</option>
+													<option value="refunded">Refunded</option>
+												</select>
+											</div>
+										</div>
 									</td>
 								</tr>
 							))}

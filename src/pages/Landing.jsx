@@ -11,6 +11,7 @@ import Testimonials from "../components/Landing/Testimonials";
 import StatsAndTestimonials from "../components/Landing/StatsAndTestimonials";
 import AboutVastu from "../components/Landing/AboutVastu";
 import Blogs from "../components/Landing/Blogs";
+import TestimonialsSection from "../components/Landing/TestimonialsSection";
 import "../App.css";
 import LetsTalk from "../components/Landing/LetsTalk";
 
@@ -29,6 +30,7 @@ const Landing = () => {
 			{/* <StatsAndTestimonials /> */}
 			{/* <AboutVastu /> */}
 			<Blogs />
+			<TestimonialsSection />
 			<LetsTalk />
 			{/* </div> */}
 		</>

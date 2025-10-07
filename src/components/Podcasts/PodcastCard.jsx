@@ -27,7 +27,7 @@ const PodcastCard = ({ video }) => {
         </div>
 
         <Link
-          to={`/videos/${video.id}`}
+          to={`/podcast/${video._id}`}
           className="font-semibold transition-opacity duration-300 hover:opacity-80 text-white bg-[#c02c07] px-4 py-2 rounded-lg text-sm text-center"
         >
           Watch Now →

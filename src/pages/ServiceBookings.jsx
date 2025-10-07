@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { useState } from "react";
+import {
+	useServiceBookingsQuery,
+	useUpdateBookingStatusMutation,
+} from "../hooks/useOrdersApi";
 
 const ServiceBookings = () => {
-	const [bookings, setBookings] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState({
 		serviceType: "",
 		status: "",
@@ -12,48 +12,23 @@ const ServiceBookings = () => {
 		limit: 10,
 	});
 
-	const fetchBookings = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			// Filter orders that contain service items
-			params.append("hasServiceItems", "true");
-			if (filter.serviceType) params.append("serviceType", filter.serviceType);
-			if (filter.status) params.append("status", filter.status);
-			params.append("page", filter.page);
-			params.append("limit", filter.limit);
+	// Build query params from filter
+	const queryParams = {};
+	if (filter.serviceType) queryParams.serviceType = filter.serviceType;
+	if (filter.status) queryParams.status = filter.status;
+	queryParams.page = filter.page;
+	queryParams.limit = filter.limit;
 
-			const response = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/orders?${params.toString()}`,
-				{ withCredentials: true }
-			);
+	// Use the service bookings query hook
+	const { data: bookings = [], isLoading: loading } = useServiceBookingsQuery({
+		params: queryParams,
+	});
 
-			setBookings(response.data.data || []);
-		} catch (error) {
-			console.error("Error fetching service bookings:", error);
-			toast.error("Failed to fetch service bookings");
-		} finally {
-			setLoading(false);
-		}
-	}, [filter]);
+	// Mutation hook for status updates
+	const updateBookingStatusMutation = useUpdateBookingStatusMutation();
 
-	useEffect(() => {
-		fetchBookings();
-	}, [fetchBookings]);
-
-	const handleStatusUpdate = async (orderId, newStatus) => {
-		try {
-			await axios.patch(
-				`${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/status`,
-				{ status: newStatus },
-				{ withCredentials: true }
-			);
-			toast.success("Status updated successfully");
-			fetchBookings();
-		} catch (error) {
-			console.error("Error updating status:", error);
-			toast.error("Failed to update status");
-		}
+	const handleStatusUpdate = (orderId, newStatus) => {
+		updateBookingStatusMutation.mutate({ orderId, status: newStatus });
 	};
 
 	const getServiceTypeLabel = (itemType, serviceType) => {

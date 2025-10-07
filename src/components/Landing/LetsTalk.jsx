@@ -1,8 +1,10 @@
 import { useFormik } from "formik";
 import React from "react";
-import axios from "axios";
+import { useContactMutation } from "../../hooks/useContactApi";
 
 const LetsTalk = () => {
+	const contactMutation = useContactMutation();
+
 	const formik = useFormik({
 		initialValues: {
 			name: "",
@@ -38,26 +40,12 @@ const LetsTalk = () => {
 			return errors;
 		},
 
-		onSubmit: async (values, { resetForm }) => {
-			try {
-				// send data to backend
-				const response = await axios.post(
-					`${import.meta.env.VITE_BACKEND_URL}/contact`,
-					values
-				);
-
-				if (response.data.success) {
-					alert(
-						`Thank you ${values.name}! Your message has been received. We'll get back to you soon at ${values.email}.`
-					);
+		onSubmit: (values, { resetForm }) => {
+			contactMutation.mutate(values, {
+				onSuccess: () => {
 					resetForm();
-				} else {
-					alert("Something went wrong. Please try again later.");
-				}
-			} catch (error) {
-				console.error(error);
-				alert("Server error. Please try again later.");
-			}
+				},
+			});
 		},
 	});
 

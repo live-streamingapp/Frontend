@@ -1,42 +1,100 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MdLogout } from "react-icons/md";
 import { LuPencilLine } from "react-icons/lu";
-import {
-	FaBell,
-	FaGraduationCap,
-	FaInfoCircle,
-	FaLifeRing,
-	FaLock,
-} from "react-icons/fa";
+import { FaGraduationCap, FaShoppingBag } from "react-icons/fa";
 import { IoIosArrowForward, IoMdLock } from "react-icons/io";
 import { BiSupport } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-
-const menuItems = [
-	{
-		label: "My Courses",
-		icon: <FaGraduationCap className="text-[#ce0d06] text-lg" />,
-		path: "/my-courses",
-	},
-	{
-		label: "Change Password",
-		icon: <IoMdLock className="text-[#ce0d06] text-lg" />,
-		path: "/change-password",
-	},
-	// {
-	//   label: "About",
-	//   icon: <FaInfoCircle className="text-[#ce0d06] text-lg" />,
-	//   path: "/about",
-	// },
-	{
-		label: "Help & Support",
-		icon: <BiSupport className="text-[#ce0d06] text-lg" />,
-		path: "/support",
-	},
-];
+import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { logout } from "../../store/slices/authSlice";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Profile = () => {
 	const navigate = useNavigate();
+	const dispatch = useAppDispatch();
+	const currentUser = useAppSelector(selectCurrentUser);
+
+	const [stats, setStats] = useState({
+		coursesCount: 0,
+		ordersCount: 0,
+		studyTime: 0,
+	});
+	const [loading, setLoading] = useState(true);
+
+	const menuItems = [
+		{
+			label: "My Courses",
+			icon: <FaGraduationCap className="text-[#ce0d06] text-lg" />,
+			path: "/my-courses",
+		},
+		{
+			label: "My Orders",
+			icon: <FaShoppingBag className="text-[#ce0d06] text-lg" />,
+			path: "/my-orders",
+		},
+		{
+			label: "Change Password",
+			icon: <IoMdLock className="text-[#ce0d06] text-lg" />,
+			path: "/change-password",
+		},
+		{
+			label: "Help & Support",
+			icon: <BiSupport className="text-[#ce0d06] text-lg" />,
+			path: "/support",
+		},
+	];
+
+	useEffect(() => {
+		const fetchUserStats = async () => {
+			try {
+				setLoading(true);
+				// Fetch enrolled courses count
+				const coursesCount = currentUser?.enrolledCourses?.length || 0;
+
+				// Fetch orders count
+				let ordersCount = 0;
+				try {
+					const ordersResponse = await axios.get(
+						`${import.meta.env.VITE_BACKEND_URL}/orders/my-orders?limit=1`,
+						{ withCredentials: true }
+					);
+					ordersCount = ordersResponse.data?.pagination?.total || 0;
+				} catch (orderError) {
+					console.error("Error fetching orders:", orderError);
+					// Don't show error toast, just use 0 as count
+				}
+
+				setStats({
+					coursesCount,
+					ordersCount,
+					studyTime: 0, // TODO: Implement study time tracking
+				});
+			} catch (error) {
+				console.error("Error fetching user stats:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		if (currentUser) {
+			fetchUserStats();
+		} else {
+			// If no user, redirect to login
+			navigate("/auth/login");
+		}
+	}, [currentUser, navigate]);
+
+	const handleLogout = () => {
+		dispatch(logout());
+		toast.success("Logged out successfully");
+		navigate("/auth/login");
+	};
+
+	// Get user's first name or full name
+	const displayName = currentUser?.name || "User";
+	const displayEmail = currentUser?.email || "email@example.com";
 
 	return (
 		<section className="mx-[1.5rem] my-[2rem]">
@@ -44,7 +102,8 @@ const Profile = () => {
 				<span className="text-[1.25rem] font-semibold">My Profile</span>
 				<button
 					type="button"
-					className="flex items-center gap-[5px] text-[#ce0d06]"
+					onClick={handleLogout}
+					className="flex items-center gap-[5px] text-[#ce0d06] hover:text-[#e47031] transition-colors"
 				>
 					<span className="bg-white p-2 rounded-full min-shadow cursor-pointer">
 						<MdLogout />
@@ -56,40 +115,59 @@ const Profile = () => {
 			<div className="mt-[50px] max-[850px]:flex-col flex justify-between gap-[3rem] mx-[0.5rem]">
 				<div className="relative rounded-xl h-full min-[475px]:h-[200px] w-[450px] max-[520px]:w-[100%] bg-gradient-to-b from-[#ce0d06] to-[#e47031] p-3">
 					<div className="max-[475px]:hidden absolute flex items-center justify-center -top-[18%] -left-[5%] h-[180px] w-[180px] bg-[#f4f4f4] rounded-full">
-						<div className="h-[80%] w-[80%] rounded-full border-2 border-[#ce0d06] red-shadow overflow-hidden">
-							<img
-								src="/images/aditi.png"
-								alt="Profile"
-								className="w-full h-full object-cover"
-							/>
+						<div className="h-[80%] w-[80%] rounded-full border-2 border-[#ce0d06] red-shadow overflow-hidden bg-white flex items-center justify-center">
+							{currentUser?.profileImage ? (
+								<img
+									src={currentUser.profileImage}
+									alt="Profile"
+									className="w-full h-full object-cover"
+								/>
+							) : (
+								<div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 text-white text-4xl font-bold">
+									{displayName.charAt(0).toUpperCase()}
+								</div>
+							)}
 						</div>
 					</div>
 					<div className="hidden max-[475px]:block h-[40%]">
-						<img
-							src="/images/aditi.png"
-							alt="Profile"
-							className="h-[200px] w-[200px] object-cover object-center rounded-full mx-auto"
-						/>
+						{currentUser?.profileImage ? (
+							<img
+								src={currentUser.profileImage}
+								alt="Profile"
+								className="h-[200px] w-[200px] object-cover object-center rounded-full mx-auto"
+							/>
+						) : (
+							<div className="h-[200px] w-[200px] rounded-full mx-auto bg-gradient-to-br from-orange-400 to-orange-600 text-white flex items-center justify-center text-6xl font-bold">
+								{displayName.charAt(0).toUpperCase()}
+							</div>
+						)}
 					</div>
 					<div className="min-[475px]:ml-[40%] flex items-center justify-between text-white border-b pb-[1rem]">
 						<div>
 							<p className="text-[1.25rem] font-semibold leading-tight">
-								Aditi Shrivas
+								{displayName}
 							</p>
-							<p className="text-sm">aditishrivas4@gmail.com</p>
+							<p className="text-sm">{displayEmail}</p>
 						</div>
-						<span className="border p-2 rounded-full bg-white/30 cursor-pointer">
+						<span
+							onClick={() => navigate("/edit-profile")}
+							className="border p-2 rounded-full bg-white/30 cursor-pointer hover:bg-white/40 transition-colors"
+						>
 							<LuPencilLine />
 						</span>
 					</div>
 					<div className="min-[475px]:ml-[40%] mt-[1rem] flex gap-[1rem] text-white">
 						<span className="flex-1 border rounded-lg p-2 bg-white/30">
-							<p className="font-semibold">20 Hrs</p>
-							<p className="text-sm">Study Time</p>
+							<p className="font-semibold">
+								{loading ? "..." : stats.coursesCount}
+							</p>
+							<p className="text-sm">Enrolled Courses</p>
 						</span>
 						<span className="flex-1 border rounded-lg p-2 bg-white/30">
-							<p className="font-semibold">11 Courses</p>
-							<p className="text-sm">Learned</p>
+							<p className="font-semibold">
+								{loading ? "..." : stats.ordersCount}
+							</p>
+							<p className="text-sm">Orders</p>
 						</span>
 					</div>
 				</div>
@@ -100,7 +178,7 @@ const Profile = () => {
 							type="button"
 							onClick={() => navigate(item.path)}
 							key={index}
-							className="flex min-shadow justify-between items-center p-3 border border-gray-300 rounded-lg text-left hover:bg-gray-50"
+							className="flex min-shadow justify-between items-center p-3 border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors"
 						>
 							<span className="flex items-center gap-3">
 								{item.icon}

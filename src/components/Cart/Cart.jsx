@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { FaHeart, FaMinus, FaPlus } from "react-icons/fa";
+import React, { useMemo, useCallback } from "react";
+import { FaMinus, FaPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
 	useCartQuery,
@@ -22,39 +22,23 @@ const Cart = () => {
 		[data]
 	);
 
-	const [favoriteMap, setFavoriteMap] = useState({});
-
-	useEffect(() => {
-		setFavoriteMap((prev) => {
-			const next = {};
-			items.forEach((item) => {
-				const key = item.cartItemId ?? item.id ?? item.productId;
-				next[key] = prev[key] ?? item.favorited ?? false;
-			});
-			return next;
-		});
-	}, [items]);
-
-	const toggleFavorite = useCallback((item) => {
-		const key = item.cartItemId ?? item.id ?? item.productId;
-		setFavoriteMap((prev) => ({
-			...prev,
-			[key]: !prev[key],
-		}));
-	}, []);
-
 	const handleQuantityChange = useCallback(
 		(item, change) => {
 			const nextQuantity = Math.max(1, Number(item.quantity ?? 1) + change);
 			if (nextQuantity === item.quantity) return;
-			updateCartItem({ productId: item.productId, quantity: nextQuantity });
+			// Use itemId (the actual item's _id) not productId (cart item's _id)
+			const itemId = item.itemId ?? item.productId;
+			updateCartItem({ itemId, quantity: nextQuantity });
 		},
 		[updateCartItem]
 	);
 
 	const handleRemove = useCallback(
 		(item) => {
-			removeCartItem({ productId: item.productId });
+			// Use itemId (the actual item's _id) not productId (cart item's _id)
+			const itemId = item.itemId ?? item.productId;
+			console.log("Removing item with itemId:", itemId);
+			removeCartItem({ itemId });
 		},
 		[removeCartItem]
 	);
@@ -111,7 +95,7 @@ const Cart = () => {
 						Add some products to get started!
 					</p>
 					<button
-						onClick={() => navigate("/products")}
+						onClick={() => navigate("/services")}
 						className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
 					>
 						Continue Shopping
@@ -122,8 +106,6 @@ const Cart = () => {
 	}
 
 	const CartItem = ({ item }) => {
-		const key = item.cartItemId ?? item.id ?? item.productId;
-		const favorited = favoriteMap[key] ?? false;
 		const imageUrl =
 			item.imageUrl || item.image || "/images/default-product.png";
 		const itemType = item.itemType ?? item.kind ?? "Product";
@@ -189,14 +171,6 @@ const Cart = () => {
 						</p>
 					)}
 				</div>
-
-				<button onClick={() => toggleFavorite(item)} className="p-1">
-					<FaHeart
-						className={`w-5 h-5 ${
-							favorited ? "fill-red-500 text-red-500" : "text-gray-400"
-						}`}
-					/>
-				</button>
 			</div>
 		);
 	};
@@ -301,14 +275,15 @@ const Cart = () => {
 										: "bg-gray-300 text-gray-500 cursor-not-allowed"
 								}`}
 							>
-								{isMutating ? "Processing..." : "Check Out"}
+								{isMutating ? "Processing..." : "Proceed to Checkout"}
 							</button>
 
 							<button
 								disabled={isMutating}
+								onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
 								className="w-full py-3 px-4 rounded-lg font-medium border border-red-600 text-red-600 hover:bg-red-50 mt-3 transition-colors disabled:opacity-50"
 							>
-								View Cart
+								View Cart Items
 							</button>
 						</div>
 					</div>

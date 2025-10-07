@@ -1,47 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { useState } from "react";
+import { useMyOrdersQuery } from "../hooks/useOrdersApi";
 
 const MyOrders = () => {
-	const [orders, setOrders] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState({
 		status: "",
 		itemType: "",
 		page: 1,
 		limit: 10,
 	});
-	const [pagination, setPagination] = useState(null);
 
-	const fetchOrders = useCallback(async () => {
-		try {
-			setLoading(true);
-			const params = new URLSearchParams();
-			if (filter.status) params.append("status", filter.status);
-			if (filter.itemType) params.append("itemType", filter.itemType);
-			params.append("page", filter.page);
-			params.append("limit", filter.limit);
+	// Build query params from filter
+	const queryParams = {};
+	if (filter.status) queryParams.status = filter.status;
+	if (filter.itemType) queryParams.itemType = filter.itemType;
+	queryParams.page = filter.page;
+	queryParams.limit = filter.limit;
 
-			const response = await axios.get(
-				`${
-					import.meta.env.VITE_BACKEND_URL
-				}/orders/my-orders?${params.toString()}`,
-				{ withCredentials: true }
-			);
+	// Use the my orders query hook
+	const { data: ordersData, isLoading: loading } = useMyOrdersQuery({
+		params: queryParams,
+	});
 
-			setOrders(response.data.data);
-			setPagination(response.data.pagination);
-		} catch (error) {
-			console.error("Error fetching orders:", error);
-			toast.error("Failed to fetch orders");
-		} finally {
-			setLoading(false);
-		}
-	}, [filter]);
-
-	useEffect(() => {
-		fetchOrders();
-	}, [fetchOrders]);
+	const orders = ordersData?.data ?? [];
+	const pagination = ordersData?.pagination;
 
 	const getStatusColor = (status) => {
 		const colors = {
@@ -148,29 +129,38 @@ const MyOrders = () => {
 
 								<div className="border-t pt-4">
 									<h4 className="font-medium mb-2">Items:</h4>
-									<div className="space-y-2">
-										{order.items.map((item, idx) => (
-											<div
-												key={idx}
-												className="flex items-center gap-4 p-2 bg-gray-50 rounded"
-											>
-												{item.image && (
-													<img
-														src={item.image}
-														alt={item.title}
-														className="w-16 h-16 object-cover rounded"
-													/>
-												)}
-												<div className="flex-1">
-													<p className="font-medium">{item.title}</p>
-													<p className="text-sm text-gray-500">
-														{item.itemType} • Qty: {item.quantity}
-													</p>
+									{order.items && order.items.length > 0 ? (
+										<div className="space-y-2">
+											{order.items.map((item, idx) => (
+												<div
+													key={idx}
+													className="flex items-center gap-4 p-2 bg-gray-50 rounded"
+												>
+													{item.image && (
+														<img
+															src={item.image}
+															alt={item.title}
+															className="w-16 h-16 object-cover rounded"
+														/>
+													)}
+													<div className="flex-1">
+														<p className="font-medium">{item.title}</p>
+														<p className="text-sm text-gray-500">
+															{item.itemType} • Qty: {item.quantity}
+														</p>
+													</div>
+													<p className="font-medium">₹{item.price}</p>
 												</div>
-												<p className="font-medium">₹{item.price}</p>
-											</div>
-										))}
-									</div>
+											))}
+										</div>
+									) : (
+										<div className="p-4 bg-gray-50 rounded text-center text-gray-500">
+											<p>No items in this order</p>
+											<p className="text-xs mt-1">
+												This order may have been created incorrectly
+											</p>
+										</div>
+									)}
 								</div>
 
 								{order.trackingNumber && (

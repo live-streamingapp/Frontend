@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react";
-import BlogCard from "./BlogCard";
 import { IoIosArrowRoundForward } from "react-icons/io";
 import { useBlogsQuery } from "../../hooks/useContentApi";
 import { LoadingSpinner, ErrorMessage, Button } from "../common";
+import { BlogCard } from "../common/cards";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { ROLES } from "../../utils/constants";
 
 const Blogs = () => {
 	const [visibleCards, setVisibleCards] = useState(6);
+	const currentUser = useAppSelector(selectCurrentUser);
+	const isAdmin =
+		currentUser?.role === ROLES.ASTROLOGER || currentUser?.role === ROLES.ADMIN;
+
 	const {
 		data: blogs = [],
 		isLoading,
@@ -39,7 +46,7 @@ const Blogs = () => {
 
 			<div className="grid gap-6 max-[600px]:grid-cols-1 max-[850px]:grid-cols-2 min-[850px]:grid-cols-3">
 				{blogs.slice(0, visibleCards).map((blog) => (
-					<BlogCard key={blog._id} blog={blog} />
+					<BlogCard key={blog._id} blog={blog} isAdmin={isAdmin} />
 				))}
 			</div>
 

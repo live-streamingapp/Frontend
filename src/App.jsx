@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./Layout/PublicLayout";
 import AdminLayout from "./Layout/AdminLayout";
@@ -17,27 +16,22 @@ import CourseDetails from "./components/StudentCourses/CourseDetails";
 import NameCalculator from "./components/NameCalculator/NameCalculator";
 import AboutUs from "./components/AboutUs/AboutUs";
 import HelpSupport from "./components/HelpSupport/HelpSupport";
-import VastuHome from "./components/Services/VastuHome";
-import VastuOffice from "./components/Services/VastuOffice";
-import VastuIndustrial from "./components/Services/VastuIndustrial";
 import Blogs from "./components/Blogs/Blogs";
 import BlogDetails from "./components/Blogs/BlogDetails";
 import PodcastPage from "./pages/PodcastPage";
+import PodcastDetails from "./components/Podcasts/PodcastDetails";
 import Contact from "./components/Contact/Contact";
-import Services from "./components/PackagePlans/Services";
 import ServicesPage from "./pages/Services"; // New services browsing page
+import ServicePackagesPage from "./pages/ServicePackagesPage"; // Reusable service packages page
 import Books from "./pages/Books";
 import BookDetails from "./components/BookService/BookDetails";
 import StudentDashboard from "./components/StudentDashboard/StudentDashboard";
 import Profile from "./components/StudentProfile/Profile";
+import EditProfile from "./components/StudentProfile/EditProfile";
 import StudentChatPage from "./pages/StudentChatPage";
 import AstrologerChatPage from "./pages/AstrologerChatPage";
 import MyCourses from "./components/StudentMyCourses/MyCourses";
 import StudentGroupChat from "./components/StudentGroupChat/StudentGroupChat";
-import Consultation from "./components/PackagePlans/Consultation";
-import NumeroVastu from "./components/PackagePlans/NumeroVastu";
-import VastuConsultation from "./components/PackagePlans/VastuConsultation";
-import AstrologyPackage from "./components/PackagePlans/AstrologyPackage";
 
 import BlogManagement from "./components/SocialForm/BlogManagement";
 import PodcastManagement from "./components/SocialForm/PodcastManagement";
@@ -99,16 +93,88 @@ function App() {
 				<Route path="courses" element={<Course />} />
 				<Route path="course/:id" element={<CourseDetails />} />
 				<Route path="name-calculator" element={<NameCalculator />} />
-				<Route path="vastu-home" element={<VastuHome />} />
-				<Route path="vastu-office" element={<VastuOffice />} />
-				<Route path="vastu-industrial" element={<VastuIndustrial />} />
-				<Route path="astrology-consultation" element={<Consultation />} />
-				<Route path="astrology-package" element={<AstrologyPackage />} />
-				<Route path="numero-consultation" element={<NumeroVastu />} />
-				<Route path="vastu-consultation" element={<VastuConsultation />} />
+
+				{/* Vastu Consultation Services */}
+				<Route
+					path="vastu-home"
+					element={
+						<ServicePackagesPage
+							title="Vastu for Home Consultations"
+							serviceType="consultation"
+							category="vastu"
+							subCategory="Vastu for Home"
+						/>
+					}
+				/>
+				<Route
+					path="vastu-office"
+					element={
+						<ServicePackagesPage
+							title="Vastu for Office Consultations"
+							serviceType="consultation"
+							category="vastu"
+							subCategory="Vastu for Office"
+						/>
+					}
+				/>
+				<Route
+					path="vastu-industrial"
+					element={
+						<ServicePackagesPage
+							title="Vastu for Industrial Consultations"
+							serviceType="consultation"
+							category="vastu"
+							subCategory="Vastu for Industrial"
+						/>
+					}
+				/>
+
+				{/* Package Plans */}
+				<Route
+					path="astrology-consultation"
+					element={
+						<ServicePackagesPage
+							title="Astrology Consultation Packages"
+							serviceType="package"
+							category="astrology"
+						/>
+					}
+				/>
+				<Route
+					path="astrology-package"
+					element={
+						<ServicePackagesPage
+							title="Astrology Packages"
+							serviceType="package"
+							category="astrology"
+						/>
+					}
+				/>
+				<Route
+					path="numero-consultation"
+					element={
+						<ServicePackagesPage
+							title="Numerology Consultation Packages"
+							serviceType="package"
+							category="numerology"
+						/>
+					}
+				/>
+				<Route
+					path="vastu-consultation"
+					element={
+						<ServicePackagesPage
+							title="Vastu Consultation Packages"
+							serviceType="package"
+							category="vastu"
+						/>
+					}
+				/>
+
 				<Route path="blogs" element={<Blogs />} />
 				<Route path="blogs/:id" element={<BlogDetails />} />
 				<Route path="podcast" element={<PodcastPage />} />
+				<Route path="podcast/:id" element={<PodcastDetails />} />
 				<Route path="contact" element={<Contact />} />
 				<Route path="services" element={<ServicesPage />} />
 				<Route path="books" element={<Books />} />
@@ -117,6 +183,7 @@ function App() {
 				<Route element={<RequireAuth />}>
 					<Route path="dashboard" element={<StudentDashboard />} />
 					<Route path="profile" element={<Profile />} />
+					<Route path="edit-profile" element={<EditProfile />} />
 					<Route path="chat" element={<StudentChatPage />} />
 					<Route path="my-courses" element={<MyCourses />} />
 					<Route path="my-orders" element={<MyOrders />} />
@@ -199,14 +266,13 @@ function App() {
 						element={<SecurityBackupPage />}
 					/>
 					{/* Other Management */}
-					{/* Other Management */}
 					<Route path="chart" element={<ChartComponent />} />
 					<Route path="customers" element={<CustomerManagement />} />
 					<Route path="user-detail/:userId" element={<UserDetailView />} />
 					<Route
 						path="student-detail/:studentId"
 						element={<StudentDetailView />}
-					/>{" "}
+					/>
 					{/* Content Management */}
 					<Route path="banner-management" element={<BannerManagement />} />
 					<Route path="create-management" element={<CreateManagement />} />
