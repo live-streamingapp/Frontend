@@ -1,173 +1,167 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
-	selectAuthToken,
-	selectCurrentUser,
-	setCredentials,
-	updateUser,
-} from "../../store/slices/authSlice";
-import toast from "react-hot-toast";
-import apiClient from "../../utils/apiClient";
+  useVerifyOtpMutation,
+  useResendOtpMutation,
+} from "../../hooks/useAuthApi";
 
 export default function EmailVerification() {
-	const navigate = useNavigate();
-	const [code, setCode] = useState([null, null, null, null, null, null]);
-	const [error, setError] = useState("");
-	const [message, setMessage] = useState("");
-	const [loading, setLoading] = useState(false);
-	const inputsRef = useRef([]);
-	const dispatch = useAppDispatch();
-	const authToken = useAppSelector(selectAuthToken);
-	const currentUser = useAppSelector(selectCurrentUser);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [code, setCode] = useState([null, null, null, null, null, null]);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const inputsRef = useRef([]);
+  const currentUser = useAppSelector(selectCurrentUser);
+  const userEmail = location.state?.email || currentUser?.email;
 
-	const handleChange = (index, value) => {
-		if (!/^[0-9]?$/.test(value)) return;
-		const newCode = [...code];
-		newCode[index] = value;
-		setCode(newCode);
-		if (value && index < 5) {
-			inputsRef.current[index + 1]?.focus();
-		}
-	};
+  const verifyOtpMutation = useVerifyOtpMutation({
+    onSuccess: () => {
+      setMessage("Account created successfully! Redirecting to dashboard...");
+      setTimeout(() => {
+        navigate("/"); // Redirect to home/dashboard
+      }, 1500);
+    },
+    onError: (error, message) => {
+      setError(message);
+    },
+  });
 
-	const handleKeyDown = (e, index) => {
-		if (e.key === "Backspace" && !code[index] && index > 0) {
-			inputsRef.current[index - 1]?.focus();
-		}
-	};
+  const resendOtpMutation = useResendOtpMutation({
+    onSuccess: () => {
+      setMessage("New OTP sent successfully! Please check your email.");
+      setError("");
+      setCode([null, null, null, null, null, null]);
+      inputsRef.current[0]?.focus();
+    },
+    onError: (error, message) => {
+      setError(message);
+    },
+  });
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setError("");
-		setMessage("");
+  const handleChange = (index, value) => {
+    if (!/^[0-9]?$/.test(value)) return;
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
+    if (value && index < 5) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  };
 
-		const otp = code.join("");
-		if (otp.length !== 6) {
-			setError("Please enter the complete 6-digit code.");
-			return;
-		}
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  };
 
-		try {
-			setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-			if (!authToken) {
-				setError("Verification token not found. Please register again.");
-				toast.error("Verification token missing. Please register again.");
-				return;
-			}
+    const otp = code.join("");
+    if (otp.length !== 6) {
+      setError("Please enter the complete 6-digit code.");
+      return;
+    }
 
-			const res = await apiClient.post("/auth/verify-otp", {
-				token: authToken,
-				otp,
-			});
+    if (!userEmail) {
+      setError("Email not found. Please register again.");
+      return;
+    }
 
-			console.log("OTP Verified:", res.data.data);
+    verifyOtpMutation.mutate({
+      email: userEmail,
+      otp: otp,
+    });
+  };
 
-			// Show success message
-			setMessage("Email verified successfully! Redirecting to login...");
-			toast.success("Email verified successfully!");
+  const handleResendOtp = () => {
+    if (!userEmail) {
+      setError("Email not found. Please register again.");
+      return;
+    }
 
-			// After successful verification, you might want to update the user object
-			const updatedUserData = {
-				...(currentUser ?? {}),
-				verified: true, // Add verified flag
-			};
-			dispatch(
-				updateUser({
-					verified: true,
-				})
-			);
-			dispatch(
-				setCredentials({
-					user: updatedUserData,
-					token: authToken,
-				})
-			);
+    resendOtpMutation.mutate({ email: userEmail });
+  };
 
-			// cleanup and redirect after a short delay
-			setTimeout(() => {
-				navigate("/");
-			}, 500);
-		} catch (err) {
-			console.error("Verification error:", err);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#fff5f5] to-[#fff9f0] overflow-hidden px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white border border-red-600 rounded-2xl shadow-xl p-8 md:p-12 z-10 max-w-[500px] w-full"
+      >
+        <div className="flex flex-col items-center gap-6">
+          <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-2">
+            Email Verification
+          </h2>
+          <p className="text-base text-gray-600 text-center">
+            Please enter the 6-digit code we sent to{" "}
+            <span className="font-semibold text-gray-800">{userEmail}</span>
+          </p>
 
-			// Better error handling
-			if (err.response) {
-				const errorMessage = err.response.data?.message;
+          {/* OTP Inputs */}
+          <div className="grid grid-cols-6 gap-2 md:gap-3 w-full max-w-[380px]">
+            {code.map((val, i) => (
+              <input
+                key={i}
+                ref={(el) => (inputsRef.current[i] = el)}
+                type="text"
+                maxLength="1"
+                value={val || ""}
+                onChange={(e) => handleChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, i)}
+                className={`h-14 w-full rounded-lg border-2 text-center text-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-[#BC3D03] transition ${
+                  val ? "border-[#BC3D03] text-[#BB0E00]" : "border-gray-300"
+                }`}
+                required
+              />
+            ))}
+          </div>
 
-				if (errorMessage === "User already verified") {
-					setMessage("Your email is already verified. You can login now.");
-					toast.success("Email already verified. Please log in.");
-					setTimeout(() => navigate("/auth/login"), 2000);
-				} else if (errorMessage === "Verification token expired") {
-					setError("Verification session expired.");
-					setMessage("Please register again to get a new verification code.");
-					toast.error("Verification token expired. Please register again.");
-				} else {
-					setError(errorMessage || "Verification failed");
-					toast.error(errorMessage || "Verification failed");
-				}
-			} else if (err.request) {
-				setError("Network error. Please check your connection.");
-				toast.error("Network error. Please check your connection.");
-			} else {
-				setError(err.message || "Something went wrong");
-				toast.error(err.message || "Something went wrong");
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
+          {/* Success Message */}
+          {message && (
+            <p className="text-green-600 text-sm font-medium">{message}</p>
+          )}
 
-	return (
-		<div className="min-h-screen flex items-center justify-center bg-[#FCFCFC] overflow-hidden px-4">
-			<form
-				onSubmit={handleSubmit}
-				className="bg-transparent border border-red-600 rounded-[15px] p-12 z-10"
-			>
-				<div className="flex flex-col items-center gap-8">
-					<h2 className="text-[24px] font-medium text-black mb-2">
-						Email Verification
-					</h2>
-					<p className="text-[16px] text-black/60 text-center">
-						Please enter the 6-digit code we sent to your email address.
-					</p>
+          {/* Error Message */}
+          {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
 
-					{/* OTP Inputs */}
-					<div className="grid grid-cols-6 gap-1 md:gap-3">
-						{code.map((val, i) => (
-							<input
-								key={i}
-								ref={(el) => (inputsRef.current[i] = el)}
-								type="text"
-								maxLength="1"
-								value={val}
-								onChange={(e) => handleChange(i, e.target.value)}
-								onKeyDown={(e) => handleKeyDown(e, i)}
-								className={`h-[60px] max-w-[60px] rounded-[10px] border text-center text-[24px] text-[#BB0E00] font-normal focus:outline-none ${
-									val ? "border-[#BC3D03]" : "border-gray-400"
-								}`}
-								required
-							/>
-						))}
-					</div>
+          <button
+            type="submit"
+            disabled={verifyOtpMutation.isPending}
+            className="w-full h-14 bg-gradient-to-b from-[#BB0E00] to-[#B94400] text-white text-base font-semibold rounded-lg shadow-md hover:opacity-90 transition disabled:opacity-60"
+          >
+            {verifyOtpMutation.isPending
+              ? "Verifying..."
+              : "Verify and Proceed"}
+          </button>
 
-					{/* Success Message */}
-					{message && <p className="text-green-600 text-sm">{message}</p>}
+          {/* Resend OTP */}
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-gray-600">Didn't receive the code? </p>
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              disabled={resendOtpMutation.isPending}
+              className="text-[#BB0E00] font-semibold hover:underline disabled:opacity-60"
+            >
+              {resendOtpMutation.isPending ? "Sending..." : "Resend OTP"}
+            </button>
+          </div>
 
-					{/* Error Message */}
-					{error && <p className="text-red-600 text-sm">{error}</p>}
-
-					<button
-						type="submit"
-						disabled={loading}
-						className="w-full h-[55px] bg-gradient-to-b from-[#BB0E00] to-[#B94400] text-white text-[14px] font-semibold rounded-[10px] shadow-inner border border-[#BB0E00] disabled:opacity-60"
-					>
-						{loading ? "Verifying..." : "Verify and Proceed"}
-					</button>
-				</div>
-			</form>
-		</div>
-	);
+          <button
+            type="button"
+            onClick={() => navigate("/auth/login")}
+            className="text-sm text-gray-600 hover:text-gray-800"
+          >
+            ← Back to Login
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }

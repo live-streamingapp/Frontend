@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Forget from "./components/Auth/Forget";
 import EmailVerification from "./components/Auth/EmailVerification";
 import ResetPassword from "./components/Auth/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 import Landing from "./pages/Landing";
 import Course from "./pages/Courses";
 import CourseDetails from "./components/StudentCourses/CourseDetails";
@@ -83,239 +84,240 @@ import AdminPackages from "./pages/AdminPackages";
 import ServiceBookings from "./pages/ServiceBookings";
 
 function App() {
-	return (
-		<Routes>
-			<Route path="/" element={<PublicLayout />}>
-				<Route index element={<Landing />} />
-				<Route path="about" element={<AboutUs />} />
-				<Route path="support" element={<HelpSupport />} />
-				<Route path="courses" element={<Course />} />
-				<Route path="course/:id" element={<CourseDetails />} />
-				<Route path="name-calculator" element={<NameCalculator />} />
+  return (
+    <Routes>
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<Landing />} />
+        <Route path="about" element={<AboutUs />} />
+        <Route path="support" element={<HelpSupport />} />
+        <Route path="courses" element={<Course />} />
+        <Route path="course/:id" element={<CourseDetails />} />
+        <Route path="name-calculator" element={<NameCalculator />} />
 
-				{/* Vastu Consultation Services */}
-				<Route
-					path="vastu-home"
-					element={
-						<ServicePackagesPage
-							title="Vastu for Home Consultations"
-							serviceType="consultation"
-							category="vastu"
-							subCategory="Vastu for Home"
-						/>
-					}
-				/>
-				<Route
-					path="vastu-residential"
-					element={
-						<ServicePackagesPage
-							title="Vastu for Residential Consultations"
-							serviceType="consultation"
-							category="vastu"
-							subCategory="Vastu for Home"
-						/>
-					}
-				/>
-				<Route
-					path="vastu-office"
-					element={
-						<ServicePackagesPage
-							title="Vastu for Office Consultations"
-							serviceType="consultation"
-							category="vastu"
-							subCategory="Vastu for Office"
-						/>
-					}
-				/>
-				<Route
-					path="vastu-industrial"
-					element={
-						<ServicePackagesPage
-							title="Vastu for Industrial Consultations"
-							serviceType="consultation"
-							category="vastu"
-							subCategory="Vastu for Factory/Commercial"
-						/>
-					}
-				/>
+        {/* Vastu Consultation Services */}
+        <Route
+          path="vastu-home"
+          element={
+            <ServicePackagesPage
+              title="Vastu for Home Consultations"
+              serviceType="consultation"
+              category="vastu"
+              subCategory="Vastu for Home"
+            />
+          }
+        />
+        <Route
+          path="vastu-residential"
+          element={
+            <ServicePackagesPage
+              title="Vastu for Residential Consultations"
+              serviceType="consultation"
+              category="vastu"
+              subCategory="Vastu for Home"
+            />
+          }
+        />
+        <Route
+          path="vastu-office"
+          element={
+            <ServicePackagesPage
+              title="Vastu for Office Consultations"
+              serviceType="consultation"
+              category="vastu"
+              subCategory="Vastu for Office"
+            />
+          }
+        />
+        <Route
+          path="vastu-industrial"
+          element={
+            <ServicePackagesPage
+              title="Vastu for Industrial Consultations"
+              serviceType="consultation"
+              category="vastu"
+              subCategory="Vastu for Factory/Commercial"
+            />
+          }
+        />
 
-				{/* Package Plans */}
-				<Route
-					path="astrology-consultation"
-					element={
-						<ServicePackagesPage
-							title="Astrology Consultation Packages"
-							serviceType="package"
-							category="astrology"
-						/>
-					}
-				/>
-				<Route
-					path="astrology-package"
-					element={
-						<ServicePackagesPage
-							title="Astrology Packages"
-							serviceType="package"
-							category="astrology"
-						/>
-					}
-				/>
-				<Route
-					path="numero-consultation"
-					element={
-						<ServicePackagesPage
-							title="Numerology Consultation Packages"
-							serviceType="package"
-							category="numerology"
-						/>
-					}
-				/>
-				<Route
-					path="vastu-consultation"
-					element={
-						<ServicePackagesPage
-							title="Vastu Consultation Packages"
-							serviceType="package"
-							category="vastu"
-						/>
-					}
-				/>
+        {/* Package Plans */}
+        <Route
+          path="astrology-consultation"
+          element={
+            <ServicePackagesPage
+              title="Astrology Consultation Packages"
+              serviceType="package"
+              category="astrology"
+            />
+          }
+        />
+        <Route
+          path="astrology-package"
+          element={
+            <ServicePackagesPage
+              title="Astrology Packages"
+              serviceType="package"
+              category="astrology"
+            />
+          }
+        />
+        <Route
+          path="numero-consultation"
+          element={
+            <ServicePackagesPage
+              title="Numerology Consultation Packages"
+              serviceType="package"
+              category="numerology"
+            />
+          }
+        />
+        <Route
+          path="vastu-consultation"
+          element={
+            <ServicePackagesPage
+              title="Vastu Consultation Packages"
+              serviceType="package"
+              category="vastu"
+            />
+          }
+        />
 
-				<Route path="blogs" element={<Blogs />} />
-				<Route path="blogs/:id" element={<BlogDetails />} />
-				<Route path="podcast" element={<PodcastPage />} />
-				<Route path="podcast/:id" element={<PodcastDetails />} />
-				<Route path="contact" element={<Contact />} />
-				<Route path="services" element={<ServicesPage />} />
-				<Route path="books" element={<Books />} />
-				<Route path="books/:id" element={<BookDetails />} />
+        <Route path="blogs" element={<Blogs />} />
+        <Route path="blogs/:id" element={<BlogDetails />} />
+        <Route path="podcast" element={<PodcastPage />} />
+        <Route path="podcast/:id" element={<PodcastDetails />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="services" element={<ServicesPage />} />
+        <Route path="books" element={<Books />} />
+        <Route path="books/:id" element={<BookDetails />} />
 
-				<Route element={<RequireAuth />}>
-					<Route path="dashboard" element={<StudentDashboard />} />
-					<Route path="profile" element={<Profile />} />
-					<Route path="edit-profile" element={<EditProfile />} />
-					<Route path="my-courses" element={<MyCourses />} />
-					<Route path="my-orders" element={<MyOrders />} />
-					<Route path="cart" element={<Cart />} />
-					<Route path="cart-page" element={<ReviewCart />} />
-				</Route>
+        <Route element={<RequireAuth />}>
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="edit-profile" element={<EditProfile />} />
+          <Route path="change-password" element={<ChangePassword />} />
+          <Route path="my-courses" element={<MyCourses />} />
+          <Route path="my-orders" element={<MyOrders />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="cart-page" element={<ReviewCart />} />
+        </Route>
 
-				{/* Auth Routes */}
-				<Route path="auth/login" element={<Login />} />
-				<Route path="auth/register" element={<Register />} />
-				<Route path="auth/forget-password" element={<Forget />} />
-				<Route path="auth/email-verification" element={<EmailVerification />} />
-				<Route path="auth/reset-password" element={<ResetPassword />} />
+        {/* Auth Routes */}
+        <Route path="auth/login" element={<Login />} />
+        <Route path="auth/register" element={<Register />} />
+        <Route path="auth/forget-password" element={<Forget />} />
+        <Route path="auth/email-verification" element={<EmailVerification />} />
+        <Route path="auth/reset-password" element={<ResetPassword />} />
 
-				<Route path="*" element={<NotFound />} />
-			</Route>
+        <Route path="*" element={<NotFound />} />
+      </Route>
 
-			{/* Student Chat - Full Screen Outside Layout */}
-			<Route element={<RequireAuth />}>
-				<Route path="/chat" element={<StudentUnifiedChatPage />} />
-			</Route>
+      {/* Student Chat - Full Screen Outside Layout */}
+      <Route element={<RequireAuth />}>
+        <Route path="/chat" element={<StudentUnifiedChatPage />} />
+      </Route>
 
-			<Route element={<RequireAdmin />}>
-				{/* Admin Chat - Full Screen Outside Layout */}
-				<Route path="/admin/chat" element={<AstrologerUnifiedChatPage />} />
+      <Route element={<RequireAdmin />}>
+        {/* Admin Chat - Full Screen Outside Layout */}
+        <Route path="/admin/chat" element={<AstrologerUnifiedChatPage />} />
 
-				<Route path="/admin" element={<AdminLayout />}>
-					<Route path="dashboard" element={<Dashboard />} />
-					<Route path="profile" element={<AdminProfile />} />
-					<Route path="settings" element={<AdminSettings />} />
-					<Route path="student-management" element={<StudentManagement />} />
-					<Route path="courses" element={<AdminCourses />} />
-					<Route path="courses/:courseId/edit" element={<CreateCourseForm />} />
-					<Route path="courses/:courseId" element={<CourseDetailPage />} />
-					<Route path="create-course" element={<CreateCourseForm />} />
-					{/* Event Management */}
-					<Route path="events" element={<EventManagement />} />
-					<Route path="create-event" element={<CreateEvent />} />
-					<Route path="event-payment" element={<EventPaymentManagement />} />
-					{/* Consultation Management */}
-					<Route
-						path="consultation-bookings"
-						element={<ConsultationBookings />}
-					/>
-					<Route
-						path="consultation-status"
-						element={<ConsultationStatusNotify />}
-					/>
-					<Route path="create-package" element={<CreatePackage />} />
-					{/* Services Management - Three Types */}
-					<Route path="consultations" element={<AdminConsultations />} />
-					<Route path="packages" element={<AdminPackages />} />
-					<Route path="services" element={<AdminServices />} />
-					<Route path="service-bookings" element={<ServiceBookings />} />
-					<Route path="create-service" element={<CreateService />} />
-					{/* Books Management */}
-					<Route path="books" element={<BooksList />} />
-					<Route path="add-book" element={<CreateBook />} />
-					{/* Orders Management */}
-					<Route path="orders" element={<OrderManagement />} />
-					{/* Legacy Routes - To be reviewed */}
-					<Route path="courses/payment" element={<EventPaymentManagement />} />
-					<Route
-						path="courses/LearningAstrology"
-						element={<StudentProgressTracking />}
-					/>
-					<Route
-						path="courses/ConsultationManagment"
-						element={<ConsultationBookings />}
-					/>
-					<Route
-						path="courses/NotifyStatus"
-						element={<ConsultationStatusNotify />}
-					/>
-					<Route path="courses/VastuServices" element={<VastuServicesPage />} />
-					<Route
-						path="courses/RolePermission"
-						element={<RolePermissionPage />}
-					/>
-					<Route
-						path="courses/PaymentSecurity"
-						element={<PaymentSecurityPage />}
-					/>
-					<Route
-						path="courses/SecurityBackup"
-						element={<SecurityBackupPage />}
-					/>
-					{/* Other Management */}
-					<Route path="chart" element={<ChartComponent />} />
-					<Route path="customers" element={<CustomerManagement />} />
-					<Route path="user-detail/:userId" element={<UserDetailView />} />
-					<Route
-						path="student-detail/:studentId"
-						element={<StudentDetailView />}
-					/>
-					{/* Content Management */}
-					<Route path="banner-management" element={<BannerManagement />} />
-					<Route path="create-management" element={<CreateManagement />} />
-					<Route path="blog-management" element={<BlogManagement />} />
-					<Route path="blog-details/:blogId" element={<AdminBlogDetails />} />
-					<Route path="podcast-management" element={<PodcastManagement />} />
-					<Route
-						path="podcast-details/:podcastId"
-						element={<AdminPodcastDetails />}
-					/>
-					{/* Support & Reviews */}
-					<Route path="manage-ticket" element={<ManageTicket />} />
-					<Route path="ticket-management" element={<TicketManagement />} />
-					<Route path="testimonials" element={<Testimonials />} />
-					<Route path="approve-comment" element={<ApproveComment />} />
-					{/* Financial */}
-					<Route
-						path="financial-management"
-						element={<FinancialManagement />}
-					/>
-					{/* Notifications */}
-					<Route path="notification-one" element={<Notification1 />} />
-					<Route path="notification-two" element={<Notification2 />} />
-					<Route path="*" element={<AdminNotFound />} />
-				</Route>
-			</Route>
-		</Routes>
-	);
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="student-management" element={<StudentManagement />} />
+          <Route path="courses" element={<AdminCourses />} />
+          <Route path="courses/:courseId/edit" element={<CreateCourseForm />} />
+          <Route path="courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="create-course" element={<CreateCourseForm />} />
+          {/* Event Management */}
+          <Route path="events" element={<EventManagement />} />
+          <Route path="create-event" element={<CreateEvent />} />
+          <Route path="event-payment" element={<EventPaymentManagement />} />
+          {/* Consultation Management */}
+          <Route
+            path="consultation-bookings"
+            element={<ConsultationBookings />}
+          />
+          <Route
+            path="consultation-status"
+            element={<ConsultationStatusNotify />}
+          />
+          <Route path="create-package" element={<CreatePackage />} />
+          {/* Services Management - Three Types */}
+          <Route path="consultations" element={<AdminConsultations />} />
+          <Route path="packages" element={<AdminPackages />} />
+          <Route path="services" element={<AdminServices />} />
+          <Route path="service-bookings" element={<ServiceBookings />} />
+          <Route path="create-service" element={<CreateService />} />
+          {/* Books Management */}
+          <Route path="books" element={<BooksList />} />
+          <Route path="add-book" element={<CreateBook />} />
+          {/* Orders Management */}
+          <Route path="orders" element={<OrderManagement />} />
+          {/* Legacy Routes - To be reviewed */}
+          <Route path="courses/payment" element={<EventPaymentManagement />} />
+          <Route
+            path="courses/LearningAstrology"
+            element={<StudentProgressTracking />}
+          />
+          <Route
+            path="courses/ConsultationManagment"
+            element={<ConsultationBookings />}
+          />
+          <Route
+            path="courses/NotifyStatus"
+            element={<ConsultationStatusNotify />}
+          />
+          <Route path="courses/VastuServices" element={<VastuServicesPage />} />
+          <Route
+            path="courses/RolePermission"
+            element={<RolePermissionPage />}
+          />
+          <Route
+            path="courses/PaymentSecurity"
+            element={<PaymentSecurityPage />}
+          />
+          <Route
+            path="courses/SecurityBackup"
+            element={<SecurityBackupPage />}
+          />
+          {/* Other Management */}
+          <Route path="chart" element={<ChartComponent />} />
+          <Route path="customers" element={<CustomerManagement />} />
+          <Route path="user-detail/:userId" element={<UserDetailView />} />
+          <Route
+            path="student-detail/:studentId"
+            element={<StudentDetailView />}
+          />
+          {/* Content Management */}
+          <Route path="banner-management" element={<BannerManagement />} />
+          <Route path="create-management" element={<CreateManagement />} />
+          <Route path="blog-management" element={<BlogManagement />} />
+          <Route path="blog-details/:blogId" element={<AdminBlogDetails />} />
+          <Route path="podcast-management" element={<PodcastManagement />} />
+          <Route
+            path="podcast-details/:podcastId"
+            element={<AdminPodcastDetails />}
+          />
+          {/* Support & Reviews */}
+          <Route path="manage-ticket" element={<ManageTicket />} />
+          <Route path="ticket-management" element={<TicketManagement />} />
+          <Route path="testimonials" element={<Testimonials />} />
+          <Route path="approve-comment" element={<ApproveComment />} />
+          {/* Financial */}
+          <Route
+            path="financial-management"
+            element={<FinancialManagement />}
+          />
+          {/* Notifications */}
+          <Route path="notification-one" element={<Notification1 />} />
+          <Route path="notification-two" element={<Notification2 />} />
+          <Route path="*" element={<AdminNotFound />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
 }
 
 export default App;

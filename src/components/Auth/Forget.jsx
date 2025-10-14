@@ -1,42 +1,26 @@
 import { useState } from "react";
 import { IoMdMail } from "react-icons/io";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MdError } from "react-icons/md";
+import { useForgotPasswordMutation } from "../../hooks/useAuthApi";
 
 export default function Forget() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [success, setSuccess] = useState(null);
-  const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
+
+  const forgotPasswordMutation = useForgotPasswordMutation({
+    onSuccess: () => {
+      // Success state is handled in the JSX below
+    },
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setSuccess(null);
-
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/auth/forgot-password`,
-        { email }
-      );
-      setMessage(res.data.message);
-      setSuccess(res.data.success);
-    } catch (err) {
-      if (err.response?.data?.message) {
-        setMessage(err.response.data.message);
-        setSuccess(false);
-      } else {
-        setMessage("Something went wrong");
-        setSuccess(false);
-      }
-    } finally {
-      setLoading(false);
-    }
+    forgotPasswordMutation.mutate({ email });
   };
+
+  const isSuccess = forgotPasswordMutation.isSuccess;
+  const errorMessage = forgotPasswordMutation.error?.response?.data?.message;
 
   return (
     <div className="relative min-h-screen bg-[#FCFCFC] flex items-center justify-center px-4 overflow-hidden">
@@ -47,7 +31,7 @@ export default function Forget() {
         onSubmit={handleSubmit}
         className="w-[600px] p-[30px] border mx-[10px] border-[#FF0000] rounded-[15px] bg-transparent flex flex-col gap-[10px] z-10"
       >
-        {success ? (
+        {isSuccess ? (
           // ✅ SUCCESS CASE
           <div className="flex flex-col items-center justify-center">
             <img
@@ -56,9 +40,16 @@ export default function Forget() {
               className="h-[200px] opacity-80"
             />
             <p className="text-gray-700 text-center">
-              {message} on the{" "}
+              Password reset link has been sent to{" "}
               <span className="text-gray-600 font-semibold">{email}</span>
             </p>
+            <button
+              type="button"
+              onClick={() => navigate("/auth/login")}
+              className="mt-4 text-[#BB0E00] font-semibold hover:underline"
+            >
+              ← Back to Login
+            </button>
           </div>
         ) : (
           // ✅ FORM + INLINE ERROR
@@ -85,9 +76,9 @@ export default function Forget() {
                 <IoMdMail className="text-[#B94400]" size={"1.5rem"} />
               </div>
               {/* Show error under input if email is not registered */}
-              {success === false && (
+              {errorMessage && (
                 <p className="flex items-center justify-center gap-2 text-sm text-red-700">
-                  {message}
+                  {errorMessage}
                   <MdError size={20} />
                 </p>
               )}
@@ -95,11 +86,11 @@ export default function Forget() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={forgotPasswordMutation.isPending}
               className="w-full h-[50px] px-[15px] text-white text-sm font-semibold font-sans rounded-[10px] border border-[#BB0E00] outline outline-[#BB0E00] outline-offset-[-1px] bg-gradient-to-b from-[#BB0E00] to-[#B94400] 
             shadow-[inset_0_4px_12.4px_rgba(255,255,255,0.25)] flex items-center justify-center cursor-pointer disabled:opacity-70"
             >
-              {loading ? "Sending..." : "Continue"}
+              {forgotPasswordMutation.isPending ? "Sending..." : "Continue"}
             </button>
           </div>
         )}
