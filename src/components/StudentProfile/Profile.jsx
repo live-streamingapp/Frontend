@@ -10,6 +10,7 @@ import { selectCurrentUser } from "../../store/slices/authSlice";
 import { logout } from "../../store/slices/authSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useEnrolledCoursesQuery } from "../../hooks/useEnrolledCoursesApi";
 
 const Profile = () => {
 	const navigate = useNavigate();
@@ -21,7 +22,12 @@ const Profile = () => {
 		ordersCount: 0,
 		studyTime: 0,
 	});
-	const [loading, setLoading] = useState(true);
+	// Orders loading handled separately; overall loading derives from both sources
+	const [ordersLoading, setOrdersLoading] = useState(true);
+
+	// Use the same data source as My Courses
+	const { data: enrolledCourses = [], isLoading: enrolledCoursesLoading } =
+		useEnrolledCoursesQuery();
 
 	const menuItems = [
 		{
@@ -47,13 +53,9 @@ const Profile = () => {
 	];
 
 	useEffect(() => {
-		const fetchUserStats = async () => {
+		const fetchOrdersCount = async () => {
 			try {
-				setLoading(true);
-				// Fetch enrolled courses count
-				const coursesCount = currentUser?.enrolledCourses?.length || 0;
-
-				// Fetch orders count
+				setOrdersLoading(true);
 				let ordersCount = 0;
 				try {
 					const ordersResponse = await axios.get(
@@ -65,26 +67,33 @@ const Profile = () => {
 					console.error("Error fetching orders:", orderError);
 					// Don't show error toast, just use 0 as count
 				}
-
-				setStats({
-					coursesCount,
+				setStats((prev) => ({
+					...prev,
 					ordersCount,
-					studyTime: 0, // TODO: Implement study time tracking
-				});
+				}));
 			} catch (error) {
-				console.error("Error fetching user stats:", error);
+				console.error("Error fetching orders count:", error);
 			} finally {
-				setLoading(false);
+				setOrdersLoading(false);
 			}
 		};
 
 		if (currentUser) {
-			fetchUserStats();
+			fetchOrdersCount();
 		} else {
-			// If no user, redirect to login
 			navigate("/auth/login");
 		}
 	}, [currentUser, navigate]);
+
+	// Sync enrolled courses count from the authoritative source
+	useEffect(() => {
+		setStats((prev) => ({
+			...prev,
+			coursesCount: Array.isArray(enrolledCourses) ? enrolledCourses.length : 0,
+		}));
+	}, [enrolledCourses]);
+
+	const loading = enrolledCoursesLoading || ordersLoading;
 
 	const handleLogout = () => {
 		dispatch(logout());

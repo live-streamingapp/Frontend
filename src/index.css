@@ -1,6 +1,9 @@
 @tailwind utilities;
 @import "tailwindcss";
 
+/* Import performance optimizations */
+@import "./styles/performance.css";
+
 /* Custom scrollbar styles */
 @layer utilities {
 	.scrollbar-thin::-webkit-scrollbar {

@@ -10,12 +10,18 @@ const invalidateEvents = (queryClient) => {
 };
 
 export const useEventsQuery = (options = {}) => {
-	const { queryKey = ["events"], onError, select, ...queryOptions } = options;
+	const {
+		queryKey = ["events"],
+		params,
+		onError,
+		select,
+		...queryOptions
+	} = options;
 
 	return useQuery({
-		queryKey,
+		queryKey: params ? [...queryKey, params] : queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/events");
+			const response = await apiClient.get("/events", { params });
 			return response.data?.data ?? [];
 		},
 		staleTime: 1000 * 60,

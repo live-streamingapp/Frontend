@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import BlogCard from "../Blogs/BlogCard";
 import { IoIosArrowRoundForward } from "react-icons/io";
 import { LoadingSpinner, ErrorMessage, Button } from "../common";
@@ -7,21 +7,51 @@ import { useNavigate } from "react-router-dom";
 
 const Blogs = () => {
 	const navigate = useNavigate();
-	const { data: blogsData = [], isLoading, error } = useBlogsQuery();
+	const {
+		data: blogsData = [],
+		isLoading,
+		error,
+	} = useBlogsQuery({
+		select: (data) => data.slice(0, 6), // Select only first 6 blogs to reduce processing
+		staleTime: 1000 * 60 * 10, // 10 minutes cache
+	});
 
-	// Limit to 3 blogs for home page
-	const blogs = blogsData.slice(0, 3);
+	// Memoize the limited blogs to prevent unnecessary re-renders
+	const blogs = useMemo(() => blogsData.slice(0, 3), [blogsData]);
 
 	const handleViewAll = () => {
 		navigate("/blogs");
 	};
 
 	if (isLoading) {
-		return <LoadingSpinner message="Loading blogs..." />;
+		return (
+			<div className="px-4 sm:px-8 md:px-12 lg:px-14 py-6 sm:py-8">
+				<h1 className="my-6 sm:my-8 text-xl sm:text-2xl text-center font-semibold">
+					Latest Blogs
+				</h1>
+				<div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+					{[1, 2, 3].map((i) => (
+						<div
+							key={i}
+							className="animate-pulse bg-gray-200 rounded-lg h-64"
+						></div>
+					))}
+				</div>
+			</div>
+		);
 	}
 
 	if (error) {
-		return <ErrorMessage message="Failed to fetch blogs. Please try again." />;
+		return (
+			<div className="px-4 sm:px-8 md:px-12 lg:px-14 py-6 sm:py-8">
+				<h1 className="my-6 sm:my-8 text-xl sm:text-2xl text-center font-semibold">
+					Latest Blogs
+				</h1>
+				<div className="text-center text-gray-600">
+					Unable to load blogs. Please try again later.
+				</div>
+			</div>
+		);
 	}
 
 	if (blogs.length === 0) {

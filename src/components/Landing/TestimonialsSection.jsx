@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FaStar } from "react-icons/fa";
 import { BiSolidQuoteAltLeft } from "react-icons/bi";
 import { useTestimonialsQuery } from "../../hooks/useTestimonialsApi";
@@ -7,17 +7,35 @@ import testimonialImg from "../../assets/testimonial.svg";
 const TestimonialsSection = () => {
 	const { data: testimonials = [], isLoading, error } = useTestimonialsQuery();
 
-	// Only show approved testimonials and limit to 6 for home page
-	const approvedTestimonials = testimonials
-		.filter((testimonial) => testimonial.status === "approved")
-		.slice(0, 6);
+	// Memoize filtered testimonials to prevent recalculation on every render
+	const approvedTestimonials = useMemo(() => {
+		return testimonials
+			.filter((testimonial) => testimonial.status === "approved")
+			.slice(0, 6);
+	}, [testimonials]);
 
 	if (isLoading) {
 		return (
 			<section className="py-16 bg-gray-50">
-				<div className="max-w-7xl mx-auto px-4 text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BB0E00] mx-auto"></div>
-					<p className="mt-4 text-gray-600">Loading testimonials...</p>
+				<div className="max-w-7xl mx-auto px-4">
+					<div className="text-center mb-12">
+						<h2 className="text-3xl font-bold text-gray-800 mb-4">
+							What Our <span className="text-[#BB0E00]">Customers Say</span>
+						</h2>
+						<p className="text-gray-600 max-w-2xl mx-auto">
+							Read testimonials from our satisfied customers who have
+							experienced transformation through our astrology and vastu
+							services
+						</p>
+					</div>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+						{[1, 2, 3].map((i) => (
+							<div
+								key={i}
+								className="animate-pulse bg-gray-200 rounded-lg h-64"
+							></div>
+						))}
+					</div>
 				</div>
 			</section>
 		);
@@ -59,6 +77,7 @@ const TestimonialsSection = () => {
 									src={testimonial.image || testimonialImg}
 									alt={testimonial.name}
 									className="w-12 h-12 rounded-full object-cover mr-4"
+									loading="lazy"
 								/>
 								<div>
 									<h4 className="font-semibold text-gray-800">

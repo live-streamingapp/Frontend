@@ -166,6 +166,14 @@ export default function CourseDetailPage() {
 							>
 								Edit Course
 							</button>
+							<button
+								onClick={() =>
+									navigate(`/admin/session-management?courseId=${courseId}`)
+								}
+								className="rounded-md px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 bg-blue-600 hover:bg-blue-700"
+							>
+								Manage Sessions
+							</button>
 						</div>
 					</div>
 				</div>

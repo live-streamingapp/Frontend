@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	useDeleteEventMutation,
 	useEventsQuery,
@@ -6,7 +6,25 @@ import {
 } from "../../hooks/useEventsApi";
 
 const EventsList = () => {
-	const { data: events = [], isLoading } = useEventsQuery();
+	// Filters
+	const [search, setSearch] = useState("");
+	const [onlyUpcoming, setOnlyUpcoming] = useState(false);
+	const [type, setType] = useState(""); // all | virtual | in-person
+
+	// Data
+	const { data: events = [], isLoading } = useEventsQuery({
+		params: {
+			upcoming: onlyUpcoming ? "true" : undefined,
+			isVirtual:
+				type === "virtual"
+					? "true"
+					: type === "in-person"
+					? "false"
+					: undefined,
+		},
+	});
+
+	// Mutations
 	const updateEventMutation = useUpdateEventMutation({
 		onSuccess: () => {
 			setIsModalOpen(false);
@@ -15,6 +33,7 @@ const EventsList = () => {
 	});
 	const deleteEventMutation = useDeleteEventMutation();
 
+	// Local edit state
 	const [selectedEvent, setSelectedEvent] = useState(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -83,57 +102,120 @@ const EventsList = () => {
 		});
 	};
 
-	if (isLoading) {
-		return <p className="text-gray-500">Loading events...</p>;
-	}
+	// Client-side search filter
+	const filtered = useMemo(() => {
+		if (!search.trim()) return events;
+		const q = search.trim().toLowerCase();
+		return events.filter((e) => {
+			const hay = [
+				e.title,
+				e.description,
+				e.location,
+				...(e.topics || []),
+				e.organizer?.name,
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return hay.includes(q);
+		});
+	}, [events, search]);
 
 	return (
 		<>
-			{events.length === 0 ? (
+			{/* Filters */}
+			<div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 flex flex-wrap gap-3 items-center">
+				<input
+					type="text"
+					placeholder="Search title, description, topic, organizer..."
+					className="border rounded px-3 py-2 text-sm flex-1 min-w-[220px]"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+				/>
+				<select
+					value={type}
+					onChange={(e) => setType(e.target.value)}
+					className="border rounded px-3 py-2 text-sm"
+				>
+					<option value="">All Types</option>
+					<option value="virtual">Virtual</option>
+					<option value="in-person">In-person</option>
+				</select>
+				<label className="text-sm flex items-center gap-2">
+					<input
+						type="checkbox"
+						checked={onlyUpcoming}
+						onChange={(e) => setOnlyUpcoming(e.target.checked)}
+					/>
+					Upcoming only
+				</label>
+			</div>
+
+			{isLoading ? (
+				<p className="text-gray-500">Loading events...</p>
+			) : filtered.length === 0 ? (
 				<p className="text-gray-500">No events found.</p>
 			) : (
 				<div className="space-y-4 max-h-[500px] overflow-y-auto hide-scrollbar">
-					{events.map((event) => (
-						<div
-							key={event._id}
-							className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
-						>
-							<h3 className="text-lg font-semibold text-gray-800">
-								{event.title}
-							</h3>
-							<p className="text-sm text-gray-600 mt-1">{event.description}</p>
-							<p className="text-xs text-gray-500 mt-2">
-								📅 {new Date(event.startTime).toLocaleDateString()}{" "}
-								{new Date(event.startTime).toLocaleTimeString([], {
-									hour: "2-digit",
-									minute: "2-digit",
-								})}{" "}
-								- {new Date(event.endTime).toLocaleDateString()}{" "}
-								{new Date(event.endTime).toLocaleTimeString([], {
-									hour: "2-digit",
-									minute: "2-digit",
-								})}{" "}
-								| 📍 {event.location}
-							</p>
+					{filtered.map((event) => {
+						const isVirtual = !!event.isVirtual;
+						const timeRange = `${new Date(
+							event.startTime
+						).toLocaleString()} - ${new Date(event.endTime).toLocaleString()}`;
+						return (
+							<div
+								key={event._id}
+								className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
+							>
+								<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+									<div>
+										<h3 className="text-lg font-semibold text-gray-800">
+											{event.title}
+										</h3>
+										<p className="text-sm text-gray-600 mt-1 line-clamp-2">
+											{event.description}
+										</p>
+										<div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-3">
+											<span>📅 {timeRange}</span>
+											{isVirtual ? (
+												<span>
+													🖥️ Virtual{" "}
+													{event.virtualPlatform?.name
+														? `(${event.virtualPlatform.name})`
+														: ""}
+												</span>
+											) : (
+												<span>📍 {event.location || "TBD"}</span>
+											)}
+											{typeof event.entryAmount === "number" && (
+												<span>🎟️ ₹{event.entryAmount}</span>
+											)}
+											{event.capacity && <span>👥 Cap: {event.capacity}</span>}
+											{Array.isArray(event.topics) &&
+												event.topics.length > 0 && (
+													<span>🏷️ {event.topics.join(", ")}</span>
+												)}
+										</div>
+									</div>
 
-							<div className="mt-3 flex justify-end gap-[1rem]">
-								<button
-									onClick={() => handleEditClick(event)}
-									className="px-4 py-1 text-white text-sm rounded-lg font-medium bg-gradient-to-r from-red-700 to-red-500 cursor-pointer transition-all duration-200"
-								>
-									Edit Event
-								</button>
-								<button
-									className="border-2 px-4 py-1 rounded-lg cursor-pointer border-red-700 text-red-700"
-									onClick={() => {
-										handleDelete(event._id);
-									}}
-								>
-									Delete
-								</button>
+									<div className="mt-2 sm:mt-0 flex items-center gap-2">
+										<button
+											onClick={() => handleEditClick(event)}
+											className="px-3 py-1.5 text-white text-xs rounded-md font-medium bg-gradient-to-r from-red-700 to-red-500 cursor-pointer transition-all duration-200"
+										>
+											Edit
+										</button>
+										<button
+											className="border px-3 py-1.5 rounded-md cursor-pointer border-red-700 text-red-700 text-xs"
+											onClick={() => handleDelete(event._id)}
+										>
+											Delete
+										</button>
+									</div>
+								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 				</div>
 			)}
 

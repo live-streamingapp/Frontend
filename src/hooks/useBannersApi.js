@@ -22,7 +22,11 @@ export const useBannersQuery = () => {
 			const response = await apiClient.get("/banners");
 			return response.data.data;
 		},
-		staleTime: 1000 * 60 * 5, // 5 minutes
+		staleTime: 1000 * 60 * 15, // 15 minutes - banners change rarely
+		cacheTime: 1000 * 60 * 60, // 1 hour cache
+		retry: 2, // Retry failed requests
+		refetchOnMount: false, // Don't refetch on component mount if data is fresh
+		refetchOnReconnect: true, // Refetch when coming back online
 	});
 };
 

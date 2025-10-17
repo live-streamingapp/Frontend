@@ -61,6 +61,11 @@ const menuItems = [
 				path: "/admin/courses",
 				icon: <FaBook size={17} />,
 			},
+			{
+				title: "Session Management",
+				path: "/admin/session-management",
+				icon: <FaVideo size={17} />,
+			},
 		],
 	},
 	{
@@ -72,11 +77,11 @@ const menuItems = [
 				path: "/admin/events",
 				icon: <FaCalendarAlt size={17} />,
 			},
-			{
-				title: "Event Payments",
-				path: "/admin/event-payment",
-				icon: <FaRupeeSign size={17} />,
-			},
+			// {
+			// 	title: "Event Payments",
+			// 	path: "/admin/event-payment",
+			// 	icon: <FaRupeeSign size={17} />,
+			// },
 		],
 	},
 	{
@@ -122,6 +127,11 @@ const menuItems = [
 		path: "/admin/orders",
 	},
 	{
+		title: "Enquiries",
+		icon: <FaComments size={20} />,
+		path: "/admin/enquiries",
+	},
+	{
 		title: "Content Management",
 		icon: <FaVideo size={20} />,
 		children: [
@@ -153,32 +163,28 @@ const menuItems = [
 	// 		},
 	// 	],
 	// },
-	{
-		title: "Support",
-		icon: <FaTicketAlt size={20} />,
-		children: [
-			{
-				title: "Ticket Management",
-				path: "/admin/ticket-management",
-				icon: <FaTicketAlt size={17} />,
-			},
-			{
-				title: "Manage Tickets",
-				path: "/admin/manage-ticket",
-				icon: <FaTicketAlt size={17} />,
-			},
-		],
-	},
+	// {
+	// 	title: "Support",
+	// 	icon: <FaTicketAlt size={20} />,
+	// 	children: [
+	// 		{
+	// 			title: "Ticket Management",
+	// 			path: "/admin/ticket-management",
+	// 			icon: <FaTicketAlt size={17} />,
+	// 		},
+	// 		{
+	// 			title: "Manage Tickets",
+	// 			path: "/admin/manage-ticket",
+	// 			icon: <FaTicketAlt size={17} />,
+	// 		},
+	// 	],
+	// },
 	{
 		title: "Reviews & Testimonials",
 		path: "/admin/testimonials",
 		icon: <FaQuoteRight size={20} />,
 	},
-	{
-		title: "Settings",
-		path: "/admin/settings",
-		icon: <FaCog size={20} />,
-	},
+	// Settings hidden for now
 ];
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {

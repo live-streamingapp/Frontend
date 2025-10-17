@@ -359,9 +359,17 @@ const Dashboard = () => {
 				<div className="flex flex-col xl:flex-row gap-6 mt-8 sm:mt-10">
 					{/* Upcoming Events */}
 					<div className="flex-1 bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
-						<h4 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
-							Upcoming Events
-						</h4>
+						<div className="flex items-center justify-between mb-4">
+							<h4 className="text-lg sm:text-xl font-semibold text-gray-800">
+								Upcoming Events
+							</h4>
+							<Link
+								to="/admin/events"
+								className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+							>
+								Manage →
+							</Link>
+						</div>
 
 						{eventsLoading ? (
 							<p>Loading events...</p>
@@ -440,6 +448,12 @@ const Dashboard = () => {
 							<h4 className="text-lg sm:text-xl font-semibold text-gray-800">
 								New Enquiries
 							</h4>
+							<Link
+								to="/admin/enquiries"
+								className="ml-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
+							>
+								View All →
+							</Link>
 						</div>
 
 						<div className="space-y-4 max-h-96 overflow-y-auto hide-scrollbar">
@@ -460,17 +474,39 @@ const Dashboard = () => {
 													{enquiry.name.charAt(0)}
 												</span>
 											</div>
-											<div className="flex-1">
-												<p className="font-bold text-gray-800 text-sm sm:text-base">
+											<div className="flex-1 min-w-0">
+												<p className="font-bold text-gray-800 text-sm sm:text-base truncate">
 													{enquiry.name}
 												</p>
-												<p className="text-xs text-gray-500">
-													🕒{" "}
-													{new Date(enquiry.createdAt).toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-													})}
-												</p>
+												<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 mt-1">
+													<a
+														className="text-blue-600 hover:underline truncate"
+														href={`mailto:${encodeURIComponent(
+															enquiry.email || ""
+														)}`}
+														title={enquiry.email}
+													>
+														{enquiry.email || "-"}
+													</a>
+													<span className="truncate">
+														{enquiry.phone || "-"}
+													</span>
+													<span className="truncate">
+														{[enquiry.city, enquiry.country]
+															.filter(Boolean)
+															.join(", ") || "-"}
+													</span>
+													<span className="text-gray-400">•</span>
+													<span className="truncate">
+														{new Date(enquiry.createdAt).toLocaleTimeString(
+															[],
+															{
+																hour: "2-digit",
+																minute: "2-digit",
+															}
+														)}
+													</span>
+												</div>
 											</div>
 										</div>
 										<p className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">
@@ -480,9 +516,24 @@ const Dashboard = () => {
 											"{enquiry.message}"
 										</p>
 										<div className="flex justify-end">
-											<button className="px-4 py-2 text-white rounded-lg font-medium bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 transition-all duration-200 text-sm">
+											<a
+												className="px-4 py-2 text-white rounded-lg font-medium bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 transition-all duration-200 text-sm"
+												href={`mailto:${encodeURIComponent(
+													enquiry.email || ""
+												)}?subject=${encodeURIComponent(
+													"Re: Your enquiry at Vastu Abhishek"
+												)}&body=${encodeURIComponent(
+													`Hi ${
+														enquiry.name || ""
+													},\n\nThanks for reaching out.\n\nYour message: \n${
+														enquiry.message || ""
+													}\n\n— Team Vastu Abhishek`
+												)}`}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
 												Quick Reply
-											</button>
+											</a>
 										</div>
 									</div>
 								))

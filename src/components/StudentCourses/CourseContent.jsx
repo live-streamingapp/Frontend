@@ -9,14 +9,14 @@ export default function CourseContent({ crsDetails }) {
 
 	return (
 		<>
-			<div className="max-w-[500px] m-[1.5rem]">
+			<div className="w-full mt-[1.5rem]">
 				<h2 className="text-[1.25rem] font-semibold mb-4">Course Content</h2>
 
 				<div className="space-y-3">
 					{videos.slice(0, visibleCount).map((item, index) => (
 						<div
 							key={item._id || index}
-							className="flex items-center justify-between border border-gray-400 rounded-lg px-4 py-2"
+							className="flex items-center justify-between border border-gray-300 rounded-lg px-4 py-2 bg-white"
 						>
 							<div className="flex items-center gap-3">
 								<FaVideo className="text-gray-600" />

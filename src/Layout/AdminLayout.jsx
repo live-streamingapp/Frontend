@@ -8,6 +8,7 @@ const getPageTitle = (pathname) => {
 	const titleMap = {
 		"/admin/dashboard": "Dashboard Overview",
 		"/admin/courses": "Course Management",
+		"/admin/session-management": "Session Management",
 		"/admin/student-management": "Student Management",
 		"/admin/events": "Event Management",
 		"/admin/event-payment": "Event Payment Management",

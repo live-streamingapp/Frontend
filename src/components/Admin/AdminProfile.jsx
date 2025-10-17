@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { FaEnvelope, FaPhoneAlt, FaUserShield } from "react-icons/fa";
-import { LuPencil } from "react-icons/lu";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { useCurrentUserQuery } from "../../hooks/useAuthApi";
 
 const defaultAdminDetails = {
-	name: "Admin",
-	email: "admin@example.com",
-	role: "Administrator",
+	name: "—",
+	email: "—",
+	role: "—",
 	phone: "—",
 };
 
@@ -24,24 +24,21 @@ const InfoRow = ({ icon, label, value }) => (
 );
 
 function AdminProfile() {
-	const [adminDetails, setAdminDetails] = useState(defaultAdminDetails);
+	const currentUser = useAppSelector(selectCurrentUser);
+	const { data: fetchedUser } = useCurrentUserQuery({
+		enabled: !currentUser,
+	});
 
-	useEffect(() => {
-		const token = Cookies.get("token");
-		if (!token) return;
-
-		try {
-			const decoded = jwtDecode(token);
-			setAdminDetails((prev) => ({
-				name: decoded?.admin?.name || decoded?.name || prev.name,
-				email: decoded?.admin?.email || decoded?.email || prev.email,
-				role: decoded?.role || prev.role,
-				phone: decoded?.admin?.phone || prev.phone,
-			}));
-		} catch (error) {
-			console.warn("Failed to decode admin token", error);
-		}
-	}, []);
+	const adminDetails = useMemo(() => {
+		const user = currentUser ?? fetchedUser;
+		if (!user) return defaultAdminDetails;
+		return {
+			name: user.name ?? defaultAdminDetails.name,
+			email: user.email ?? defaultAdminDetails.email,
+			role: user.role ?? defaultAdminDetails.role,
+			phone: user.phone ?? defaultAdminDetails.phone,
+		};
+	}, [currentUser, fetchedUser]);
 
 	return (
 		<div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 md:p-10">
@@ -52,10 +49,7 @@ function AdminProfile() {
 					</h1>
 					<p className="text-sm text-gray-500">{adminDetails.role}</p>
 				</div>
-				<button className="inline-flex items-center gap-2 text-sm font-medium text-[#BB0E00] border border-[#BB0E00] rounded-full px-4 py-2 hover:bg-[#FFF4F3] transition">
-					<LuPencil />
-					Edit Profile
-				</button>
+				{/* Edit Profile button hidden until edit flow is implemented */}
 			</header>
 
 			<section className="grid gap-4 md:grid-cols-2 mt-6">
@@ -76,21 +70,7 @@ function AdminProfile() {
 				/>
 			</section>
 
-			<section className="mt-8">
-				<h2 className="text-lg font-semibold text-gray-900 mb-3">
-					Security & Activity
-				</h2>
-				<div className="space-y-3">
-					<p className="text-sm text-gray-500">
-						Last login:{" "}
-						<span className="font-medium text-gray-700">Just now</span>
-					</p>
-					<p className="text-sm text-gray-500">
-						Two-factor authentication:{" "}
-						<span className="font-medium text-gray-700">Coming soon</span>
-					</p>
-				</div>
-			</section>
+			{/* Removed static Security & Activity placeholders */}
 		</div>
 	);
 }

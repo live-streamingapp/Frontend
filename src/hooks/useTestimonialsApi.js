@@ -14,7 +14,10 @@ export const useTestimonialsQuery = (enabled = true) => {
 			return response.data;
 		},
 		enabled,
-		staleTime: 5 * 60 * 1000, // 5 minutes
+		staleTime: 10 * 60 * 1000, // 10 minutes - testimonials are quite static
+		cacheTime: 60 * 60 * 1000, // 1 hour cache
+		refetchOnMount: false, // Don't refetch if data is fresh
+		refetchOnReconnect: true, // Refetch when coming back online
 		onError: (error) => {
 			const message = getErrorMessage(
 				error,

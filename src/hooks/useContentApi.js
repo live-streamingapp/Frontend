@@ -50,7 +50,9 @@ export const useBlogsQuery = (options = {}) => {
 			const response = await apiClient.get("/blogs");
 			return response.data?.data ?? [];
 		},
-		staleTime: 1000 * 60,
+		staleTime: 1000 * 60 * 10, // 10 minutes - blogs don't change frequently
+		cacheTime: 1000 * 60 * 30, // 30 minutes cache
+		refetchOnMount: false, // Don't refetch if data is fresh
 		onError: (error) => {
 			const message = getErrorMessage(
 				error,

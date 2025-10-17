@@ -13,6 +13,16 @@ const queryClient = new QueryClient({
 		queries: {
 			retry: 1,
 			refetchOnWindowFocus: false,
+			staleTime: 1000 * 60 * 5, // 5 minutes - increased for better caching
+			cacheTime: 1000 * 60 * 30, // 30 minutes cache
+			// Enable background refetch but prevent aggressive refetching
+			refetchOnMount: true,
+			refetchOnReconnect: "always",
+			// Reduce network calls by suspending queries when not needed
+			suspense: false,
+		},
+		mutations: {
+			retry: 1,
 		},
 	},
 });

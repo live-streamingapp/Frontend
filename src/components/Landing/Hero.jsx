@@ -132,6 +132,7 @@ const Hero = () => {
 										src={slide.image}
 										alt="Hero Slide"
 										className="object-contain h-[250px] w-[250px] lg:h-[350px] lg:w-[350px]"
+										loading="lazy"
 									/>
 								</div>
 							)}

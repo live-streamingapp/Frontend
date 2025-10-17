@@ -14,6 +14,8 @@
 		"@reduxjs/toolkit": "^2.2.7",
 		"@tailwindcss/vite": "^4.1.11",
 		"@tanstack/react-query": "^5.60.0",
+		"agora-rtc-react": "^2.5.0",
+		"agora-rtc-sdk-ng": "^4.24.0",
 		"axios": "^1.11.0",
 		"formik": "^2.4.6",
 		"heroicons": "^2.2.0",
