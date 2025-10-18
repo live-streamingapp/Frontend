@@ -48,7 +48,7 @@ const PremiumServices = () => {
 								path: "/vastu-consultation",
 							},
 							{
-								title: "Logo Designing Consultation",
+								title: "Designing Consultation",
 								color: "from-green-600 to-green-400",
 								text: "text-orange-600",
 								icon: icon2,

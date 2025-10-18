@@ -21,6 +21,7 @@ const FreeServices = () => {
 								icon: icon1,
 								title: "Kundli",
 								color: "from-red-500 to-red-400",
+								path: "/kundli",
 							},
 							{
 								icon: icon2,
@@ -32,6 +33,7 @@ const FreeServices = () => {
 								icon: icon3,
 								title: "Free Vastu courses",
 								color: "from-orange-500 to-orange-400",
+								path: "/courses?price=free",
 							},
 						].map(({ icon, title, color, path }) => (
 							<div

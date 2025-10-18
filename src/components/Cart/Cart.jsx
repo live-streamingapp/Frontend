@@ -6,6 +6,7 @@ import {
 	useRemoveCartItemMutation,
 	useUpdateCartItemMutation,
 } from "../../hooks/useCartApi";
+import ImageWithFallback from "../common/ImageWithFallback";
 
 const Cart = () => {
 	const navigate = useNavigate();
@@ -106,8 +107,7 @@ const Cart = () => {
 	}
 
 	const CartItem = ({ item }) => {
-		const imageUrl =
-			item.imageUrl || item.image || "/images/default-product.png";
+		const imageUrl = item.imageUrl || item.image || "/images/fallback.svg";
 		const itemType = item.itemType ?? item.kind ?? "Product";
 		const isCourse = itemType === "Course";
 		const isService = itemType === "Service";
@@ -135,7 +135,7 @@ const Cart = () => {
 		return (
 			<div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-3">
 				<div className="w-20 h-20 bg-white rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-					<img
+					<ImageWithFallback
 						src={imageUrl}
 						alt={item.name}
 						className="w-full h-full object-contain"

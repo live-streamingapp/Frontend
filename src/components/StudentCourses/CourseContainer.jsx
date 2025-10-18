@@ -3,7 +3,11 @@ import CourseCard from "./CourseCard"; // import new card
 import LoadingOverlay from "../common/LoadingOverlay";
 import { useCoursesQuery } from "../../hooks/useCoursesApi";
 
-const CourseContainer = ({ filter = "All", searchTerm = "" }) => {
+const CourseContainer = ({
+	filter = "All",
+	searchTerm = "",
+	priceFilter = "all",
+}) => {
 	const [visibleCount, setVisibleCount] = useState(8);
 	const {
 		data: coursesData,
@@ -35,8 +39,15 @@ const CourseContainer = ({ filter = "All", searchTerm = "" }) => {
 			);
 		}
 
+		// Apply price filter
+		if (priceFilter === "free") {
+			filtered = filtered.filter((course) => Number(course.price ?? 0) === 0);
+		} else if (priceFilter === "paid") {
+			filtered = filtered.filter((course) => Number(course.price ?? 0) > 0);
+		}
+
 		return filtered;
-	}, [coursesData, filter, searchTerm]);
+	}, [coursesData, filter, searchTerm, priceFilter]);
 
 	const hasCourses = courses.length > 0;
 	const showOverlay = isFetching && !isLoading && hasCourses;

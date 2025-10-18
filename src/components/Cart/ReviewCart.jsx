@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import {} from "react-router-dom";
+import { useInitiatePayUMutation } from "../../hooks/usePaymentApi";
 import toast from "react-hot-toast";
 import ImageWithFallback from "../common/ImageWithFallback";
 import {
@@ -13,6 +13,7 @@ const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const getDisplayImage = (item) => {
 	if (item.imageUrl) return item.imageUrl;
 	if (item.image) {
+		if (item.image.startsWith("http")) return item.image;
 		const baseUrl = import.meta.env.VITE_BACKEND_URL;
 		if (!baseUrl) return item.image;
 		const normalized = item.image.startsWith("/")
@@ -24,11 +25,12 @@ const getDisplayImage = (item) => {
 };
 
 export default function ReviewCart() {
-	const navigate = useNavigate();
-	const { data, isLoading, isError, error, refetch } = useCartQuery();
+	const { data, isLoading, isError, error } = useCartQuery();
 	const { mutate: removeCartItem, isPending } = useRemoveCartItemMutation({
 		showSuccessToast: true,
 	});
+	const { mutateAsync: initiatePayU } = useInitiatePayUMutation();
+	// no-op
 
 	const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
@@ -38,60 +40,38 @@ export default function ReviewCart() {
 		[data]
 	);
 
-	const handleCreateOrder = async () => {
-		// Validate cart has items
+	const handlePayUCheckout = async () => {
 		if (!items || items.length === 0) {
 			toast.error("Your cart is empty");
 			return;
 		}
-
-		// Show confirmation alert
-		const confirmed = window.confirm(
-			`Are you sure you want to place an order for ₹${totals.totalAmount.toLocaleString()}?\n\nPayment gateway integration will be added soon.`
-		);
-
-		if (!confirmed) {
-			return;
-		}
-
 		try {
 			setIsProcessingOrder(true);
-
-			// Prepare order items from cart
-			const orderItems = items.map((item) => ({
-				itemId: item.itemId || item.productId,
-				itemType: item.itemType || item.kind || "Product",
-				quantity: item.quantity || 1,
-				price: item.price,
-			}));
-
-			// Create order with pending payment status
-			const orderResponse = await axios.post(
-				`${VITE_BACKEND_URL}/orders`,
-				{
-					items: orderItems,
-					paymentMethod: "pending", // Will be set by payment gateway
-					paymentStatus: "pending", // Set payment status to pending
-					clearCart: true, // Clear cart after order creation
-				},
-				{
-					withCredentials: true,
-				}
-			);
-
-			if (orderResponse.data.success) {
-				toast.success("Order placed successfully! Payment is pending.");
-				refetch(); // Refresh cart to show it's empty
-				navigate("/my-orders"); // Redirect to orders page
+			const payload = await initiatePayU();
+			if (!payload?.payuUrl || !payload?.params) {
+				throw new Error("Invalid payment response");
 			}
+
+			// Build and submit a form to PayU
+			const form = document.createElement("form");
+			form.method = "POST";
+			form.action = payload.payuUrl;
+			Object.entries(payload.params).forEach(([key, value]) => {
+				const input = document.createElement("input");
+				input.type = "hidden";
+				input.name = key;
+				input.value = String(value ?? "");
+				form.appendChild(input);
+			});
+			document.body.appendChild(form);
+			form.submit();
 		} catch (error) {
-			console.error("Order creation error:", error);
+			console.error("PayU initiate error:", error);
 			const message =
 				error.response?.data?.message ||
 				error.message ||
-				"Failed to create order. Please try again.";
+				"Failed to start payment. Please try again.";
 			toast.error(message);
-		} finally {
 			setIsProcessingOrder(false);
 		}
 	};
@@ -194,17 +174,17 @@ export default function ReviewCart() {
 
 			<div className="flex justify-center mt-4">
 				<button
-					onClick={handleCreateOrder}
+					onClick={handlePayUCheckout}
 					disabled={isPending || isProcessingOrder}
 					className="bg-[#ba3400] text-white py-2 px-6 rounded text-lg font-medium shadow-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{isProcessingOrder ? (
 						<span className="flex items-center justify-center gap-2">
 							<div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-							Creating Order...
+							Redirecting to PayU...
 						</span>
 					) : (
-						"Continue to Payment"
+						"Proceed to Pay"
 					)}
 				</button>
 			</div>

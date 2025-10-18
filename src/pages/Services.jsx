@@ -50,8 +50,13 @@ const Services = () => {
 
 	// Check if service is in cart
 	const isServiceInCart = (serviceId) => {
-		if (!cartData?.data?.items) return false;
-		return cartData.data.items.some((item) => item.itemId?._id === serviceId);
+		const items = cartData?.items;
+		if (!items || !serviceId) return false;
+		return items.some(
+			(item) =>
+				(item.productId === serviceId || item.itemId === serviceId) &&
+				(item.kind === "Service" || item.itemType === "Service")
+		);
 	};
 
 	const handleFilterChange = (key, value) => {

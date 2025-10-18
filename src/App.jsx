@@ -15,6 +15,7 @@ import Landing from "./pages/Landing";
 import Course from "./pages/Courses";
 import CourseDetails from "./components/StudentCourses/CourseDetails";
 import NameCalculator from "./components/NameCalculator/NameCalculator";
+import KundliPage from "./pages/KundliPage";
 import AboutUs from "./components/AboutUs/AboutUs";
 import HelpSupport from "./components/HelpSupport/HelpSupport";
 import Blogs from "./components/Blogs/Blogs";
@@ -101,6 +102,7 @@ function App() {
 				<Route path="courses" element={<Course />} />
 				<Route path="course/:id" element={<CourseDetails />} />
 				<Route path="name-calculator" element={<NameCalculator />} />
+				<Route path="kundli" element={<KundliPage />} />
 
 				{/* Vastu Consultation Services */}
 				<Route

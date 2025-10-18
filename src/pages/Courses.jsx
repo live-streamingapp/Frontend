@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import CourseHeader from "../components/StudentCourses/CourseHeader";
 import CourseContainer from "../components/StudentCourses/CourseContainer";
 import { useAppSelector } from "../store/hooks";
@@ -10,6 +10,17 @@ const Course = () => {
 	const role = user?.role;
 	const [filter, setFilter] = useState("All");
 	const [searchTerm, setSearchTerm] = useState("");
+	const [priceFilter, setPriceFilter] = useState("all"); // all | paid | free
+	const location = useLocation();
+
+	// Initialize from query params (e.g., /courses?price=free)
+	useEffect(() => {
+		const params = new URLSearchParams(location.search);
+		const price = (params.get("price") || "").toLowerCase();
+		if (price === "free" || price === "paid") {
+			setPriceFilter(price);
+		}
+	}, [location.search]);
 
 	// Redirect admin/astrologer to admin dashboard
 	// They should use admin panel for course management
@@ -20,8 +31,17 @@ const Course = () => {
 	// Show student course view
 	return (
 		<>
-			<CourseHeader onFilterChange={setFilter} onSearchChange={setSearchTerm} />
-			<CourseContainer filter={filter} searchTerm={searchTerm} />
+			<CourseHeader
+				onFilterChange={setFilter}
+				onSearchChange={setSearchTerm}
+				priceFilter={priceFilter}
+				onPriceFilterChange={setPriceFilter}
+			/>
+			<CourseContainer
+				filter={filter}
+				searchTerm={searchTerm}
+				priceFilter={priceFilter}
+			/>
 		</>
 	);
 };
