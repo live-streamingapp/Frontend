@@ -1,6 +1,6 @@
 // src/components/courseProgress/CourseProgressPage.jsx
 import React from "react";
-import StudentProfileHeader from "./StudentProfileHeader";
+// Note: Removed StudentProfileHeader to keep course-only details in UI
 import StatsCard from "./StatsCard";
 import ProgressChart from "./ProgressChart";
 import LoadingOverlay from "../common/LoadingOverlay";
@@ -108,15 +108,27 @@ export default function CourseProgressPage({
 
 				return (
 					<article key={key} className="space-y-4">
-						<StudentProfileHeader
-							student={{
-								name: entry.student?.name ?? "Unknown Student",
-								id: entry.student?._id ?? "",
-								course: entry.course?.title ?? "",
-								avatar: entry.avatar,
-								email: entry.student?.email,
-							}}
-						/>
+						{/* Course-only header */}
+						<div className="rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+							<div className="flex items-center justify-between">
+								<div>
+									<p className="text-xs uppercase tracking-wide text-gray-500">
+										Course
+									</p>
+									<h3 className="text-lg font-semibold text-gray-900">
+										{entry.course?.title ?? "Untitled Course"}
+									</h3>
+								</div>
+								{entry.progressPercent != null && (
+									<div className="text-right">
+										<p className="text-xs text-gray-500">Progress</p>
+										<p className="text-base font-semibold text-gray-900">
+											{progressPercent}%
+										</p>
+									</div>
+								)}
+							</div>
+						</div>
 
 						<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 							<div className="grid grid-cols-2 gap-4 lg:col-span-1">

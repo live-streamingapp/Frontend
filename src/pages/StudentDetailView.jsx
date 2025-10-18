@@ -72,6 +72,69 @@ export default function StudentDetailView() {
 		() => progressData?.progress ?? [],
 		[progressData]
 	);
+
+	// Build merged course progress list: ensure all enrolled courses appear,
+	// even if no StudentProgress exists yet (show 0% placeholders)
+	const mergedProgressEntries = React.useMemo(() => {
+		const studentId = userData?._id;
+		const studentInfo = studentId
+			? { _id: studentId, name: userData?.name, email: userData?.email }
+			: undefined;
+
+		// Map existing progress by courseId for quick lookup
+		const progressByCourse = new Map();
+		for (const p of progress) {
+			const cId = p?.course?._id || p?.course;
+			if (cId) progressByCourse.set(String(cId), p);
+		}
+
+		const enrolled = Array.isArray(userData?.enrolledCourses)
+			? userData.enrolledCourses
+			: [];
+
+		const results = [];
+
+		// Add one entry per enrolled course, using progress if available
+		for (const c of enrolled) {
+			const cId = typeof c === "string" ? c : c?._id;
+			if (!cId) continue;
+			const existing = progressByCourse.get(String(cId));
+			if (existing) {
+				results.push(existing);
+			} else {
+				results.push({
+					student: studentInfo,
+					course: {
+						_id: cId,
+						title: typeof c === "object" ? c?.title : cId,
+						image: typeof c === "object" ? c?.image : undefined,
+					},
+					videosCompleted: 0,
+					videosTotal: 0,
+					quizzesCompleted: 0,
+					quizzesTotal: 0,
+					progressPercent: 0,
+					status: "On Track",
+					timeline: [],
+				});
+			}
+		}
+
+		// Also include any progress entries whose course is not currently in enrolledCourses (edge cases)
+		for (const p of progress) {
+			const cId = p?.course?._id || p?.course;
+			if (!cId) continue;
+			if (
+				!enrolled.some(
+					(c) => String(typeof c === "string" ? c : c?._id) === String(cId)
+				)
+			) {
+				results.push(p);
+			}
+		}
+
+		return results;
+	}, [userData, progress]);
 	// Get orders from customer data (no separate API call needed)
 	const orders = React.useMemo(() => userData?.orders ?? [], [userData]);
 
@@ -141,7 +204,7 @@ export default function StudentDetailView() {
 	// Tab badges
 	const tabBadges = {
 		basicDetails: 0,
-		courseProgress: progress.length,
+		courseProgress: mergedProgressEntries.length,
 		bookingHistory: bookings.length,
 		studentOrders: orders.length,
 		reportsDownload: reports.length,
@@ -227,7 +290,7 @@ export default function StudentDetailView() {
 			)}
 			{activeTab === "courseProgress" && (
 				<CourseProgressPage
-					entries={progress}
+					entries={mergedProgressEntries}
 					isLoading={isProgressLoading}
 					isFetching={isProgressFetching}
 					isError={isProgressError}
@@ -265,7 +328,7 @@ export default function StudentDetailView() {
 											<th className="p-3">Status</th>
 											<th className="p-3">Payment</th>
 											<th className="p-3">Date</th>
-											<th className="p-3 text-right">Actions</th>
+											{/* Actions column removed */}
 										</tr>
 									</thead>
 									<tbody>
@@ -335,21 +398,7 @@ export default function StudentDetailView() {
 												<td className="p-3 text-xs text-gray-600">
 													{formatDate(order.createdAt)}
 												</td>
-												<td className="p-3 text-right">
-													<button
-														type="button"
-														onClick={() =>
-															navigate(`/admin/orders/${order._id}`)
-														}
-														className="inline-flex items-center justify-center rounded-md px-3 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-														style={{
-															background:
-																"linear-gradient(to right, #BB0E00, #B94400)",
-														}}
-													>
-														View Details
-													</button>
-												</td>
+												{/* Actions cell removed */}
 											</tr>
 										))}
 									</tbody>

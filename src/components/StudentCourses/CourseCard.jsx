@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaCheck } from "react-icons/fa";
 import { useAppSelector } from "../../store/hooks";
@@ -6,6 +6,7 @@ import { selectCurrentUser } from "../../store/slices/authSlice";
 import { ROLES } from "../../utils/constants";
 import { useAddToCartMutation, useCartQuery } from "../../hooks/useCartApi";
 import { useEnrolledCoursesQuery } from "../../hooks/useEnrolledCoursesApi";
+import ImageWithFallback from "../common/ImageWithFallback";
 
 export default function CourseCard({ course }) {
 	const navigate = useNavigate();
@@ -63,6 +64,17 @@ export default function CourseCard({ course }) {
 			: text;
 	};
 
+	// Resolve image URL with backend prefix if course.image is relative
+	const imageSrc = useMemo(() => {
+		const src = course?.image;
+		if (!src) return undefined;
+		if (/^https?:\/\//i.test(src)) return src;
+		const baseUrl = import.meta.env.VITE_BACKEND_URL;
+		if (!baseUrl) return src; // fallback to whatever is provided
+		const normalized = src.startsWith("/") ? src.slice(1) : src;
+		return `${baseUrl}/${normalized}`;
+	}, [course?.image]);
+
 	return (
 		<div
 			key={course._id}
@@ -73,8 +85,8 @@ export default function CourseCard({ course }) {
 				className="cursor-pointer overflow-hidden group"
 				onClick={() => navigate(`/course/${course._id}`)}
 			>
-				<img
-					src={course.image}
+				<ImageWithFallback
+					src={imageSrc}
 					alt={course.title}
 					className="h-[200px] w-full object-cover transition-transform duration-300 group-hover:scale-110"
 				/>

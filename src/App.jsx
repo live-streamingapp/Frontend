@@ -69,7 +69,6 @@ import { ManageTicket } from "./pages/ManageTicket";
 import Notification1 from "./components/AdminDashboard/Notification1";
 import Notification2 from "./components/AdminDashboard/Notification2";
 import AdminProfile from "./components/Admin/AdminProfile";
-import AdminSettings from "./pages/AdminSettings";
 import ChartComponent from "./components/Admin/ChartComponent";
 import CourseDetailPage from "./pages/CourseDetailPage";
 

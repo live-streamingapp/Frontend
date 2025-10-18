@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-import rudrakshImg from "../../assets/rudraksh.png";
+import ImageWithFallback from "../common/ImageWithFallback";
 import {
 	useCartQuery,
 	useRemoveCartItemMutation,
@@ -20,7 +20,7 @@ const getDisplayImage = (item) => {
 			: item.image;
 		return `${baseUrl}/${normalized}`;
 	}
-	return rudrakshImg;
+	return "/images/fallback.svg";
 };
 
 export default function ReviewCart() {
@@ -127,7 +127,7 @@ export default function ReviewCart() {
 					className="rounded-2xl shadow-md bg-white"
 				>
 					<div className="flex items-start p-4 gap-4">
-						<img
+						<ImageWithFallback
 							src={getDisplayImage(item)}
 							alt={item.name}
 							className="w-20 h-20 rounded-lg object-cover flex-shrink-0"

@@ -1,18 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	LineChart,
-	Line,
-	PieChart,
-	Pie,
-	Cell,
-} from "recharts";
+import ImageWithFallback from "../components/common/ImageWithFallback";
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
 	FaBell,
 	FaChevronLeft,
@@ -20,12 +8,10 @@ import {
 	FaRupeeSign,
 	FaUser,
 	FaShoppingCart,
-	FaBook,
 	FaGraduationCap,
 	FaClock,
 	FaCheckCircle,
 	FaSpinner,
-	FaTimes,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import {
@@ -71,20 +57,6 @@ const Dashboard = () => {
 			value: count,
 		}));
 	}, [ordersData?.recentOrders]);
-
-	useEffect(() => {
-		if (events.length === 0) {
-			return;
-		}
-
-		const interval = setInterval(() => {
-			setCurrentEventIndex((prevIndex) =>
-				prevIndex === events.length - 1 ? 0 : prevIndex + 1
-			);
-		}, 4000);
-
-		return () => clearInterval(interval);
-	}, [events]);
 
 	useEffect(() => {
 		if (currentEventIndex >= events.length && events.length > 0) {
@@ -161,7 +133,7 @@ const Dashboard = () => {
 											? "..."
 											: `₹${((ordersData?.revenue ?? 0) / 1000).toFixed(1)}K`}
 									</span>
-									<span className="text-xs text-gray-500">Paid Orders</span>
+									<span className="text-xs text-gray-500">Paid Revenue</span>
 								</div>
 							</div>
 						</div>
@@ -312,42 +284,44 @@ const Dashboard = () => {
 							</p>
 						) : (
 							<>
-								<ResponsiveContainer width="100%" height={200}>
-									<PieChart>
-										<Pie
-											data={orderStatusData}
-											cx="50%"
-											cy="50%"
-											labelLine={false}
-											label={(entry) => `${entry.name}: ${entry.value}`}
-											outerRadius={80}
-											fill="#8884d8"
-											dataKey="value"
-										>
-											{orderStatusData.map((entry, index) => (
-												<Cell
-													key={`cell-${index}`}
-													fill={COLORS[index % COLORS.length]}
-												/>
-											))}
-										</Pie>
-										<Tooltip />
-									</PieChart>
-								</ResponsiveContainer>
+								<div className="flex flex-col items-center justify-center min-h-[280px]">
+									<ResponsiveContainer width="100%" height={300}>
+										<PieChart>
+											<Pie
+												data={orderStatusData}
+												cx="50%"
+												cy="50%"
+												labelLine={false}
+												label={(entry) => `${entry.name}: ${entry.value}`}
+												outerRadius={80}
+												fill="#8884d8"
+												dataKey="value"
+											>
+												{orderStatusData.map((entry, index) => (
+													<Cell
+														key={`cell-${index}`}
+														fill={COLORS[index % COLORS.length]}
+													/>
+												))}
+											</Pie>
+											<Tooltip />
+										</PieChart>
+									</ResponsiveContainer>
 
-								{/* Legend */}
-								<div className="grid grid-cols-2 gap-3 mt-4">
-									<div className="flex items-center gap-2">
-										<FaClock className="text-yellow-600" />
-										<span className="text-sm text-gray-600">
-											Pending: {ordersData?.pending ?? 0}
-										</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<FaCheckCircle className="text-green-600" />
-										<span className="text-sm text-gray-600">
-											Completed: {ordersData?.completed ?? 0}
-										</span>
+									{/* Legend */}
+									<div className="grid grid-cols-2 gap-3 mt-4">
+										<div className="flex items-center gap-2">
+											<FaClock className="text-yellow-600" />
+											<span className="text-sm text-gray-600">
+												Pending: {ordersData?.pending ?? 0}
+											</span>
+										</div>
+										<div className="flex items-center gap-2">
+											<FaCheckCircle className="text-green-600" />
+											<span className="text-sm text-gray-600">
+												Completed: {ordersData?.completed ?? 0}
+											</span>
+										</div>
 									</div>
 								</div>
 							</>
@@ -387,11 +361,8 @@ const Dashboard = () => {
 									>
 										{events.map((event) => (
 											<div key={event._id} className="w-full flex-shrink-0">
-												<img
-													src={
-														event.thumbnail ||
-														"https://placehold.co/400x250?text=No+Image"
-													}
+												<ImageWithFallback
+													src={event.thumbnail}
 													alt={event.title}
 													className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-xl"
 												/>

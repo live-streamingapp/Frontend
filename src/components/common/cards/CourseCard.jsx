@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { FaEdit, FaTrash, FaShoppingCart, FaCheck } from "react-icons/fa";
 import BaseCard from "../BaseCard";
+import ImageWithFallback from "../ImageWithFallback";
 
 /**
  * CourseCard - Reusable card component for displaying courses
@@ -80,7 +81,7 @@ const CourseCard = ({
 		>
 			{/* Course Image */}
 			<div className="relative w-full h-48 bg-gray-100 overflow-hidden group">
-				<img
+				<ImageWithFallback
 					src={course.image}
 					alt={course.title}
 					className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"

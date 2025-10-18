@@ -128,6 +128,36 @@ export const useStudentProgressQuery = (studentId = null, options = {}) => {
 	});
 };
 
+// Fetch progress entries filtered by course for admin course detail page
+export const useCourseEnrolledStudentsQuery = (courseId, options = {}) => {
+	const {
+		onError,
+		queryKey = ["admin", "courses", courseId, "enrolled-students"],
+		select,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			if (!courseId) return { progress: [] };
+			const response = await apiClient.get(`/admin/students/progress`, {
+				params: { courseId },
+			});
+			return response.data;
+		},
+		enabled: !!courseId,
+		staleTime: 1000 * 60,
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
 // NOTE: useStudentOrdersQuery has been removed because orders are now included
 // in the useCustomerByIdQuery response, eliminating the need for a separate API call
 
@@ -221,14 +251,16 @@ export const useCustomerByIdQuery = (customerId, options = {}) => {
 		queryKey,
 		queryFn: async () => {
 			const response = await apiClient.get(`/admin/customers/${customerId}`);
-			const customerData = response.data?.data ?? {};
+			const payload = response.data?.data ?? {};
+			const customer = payload.customer ?? payload; // support both shapes
+			const orders = payload.orders ?? [];
+			const totalOrders = payload.totalOrders ?? orders.length;
 
-			// Extract orders from customer data if they exist
-			const orders = customerData.orders ?? [];
-
+			// Flatten return so consumers can do userData.name, userData.email, etc.
 			return {
-				...customerData,
-				orders, // Include orders in the returned data
+				...customer,
+				orders,
+				totalOrders,
 			};
 		},
 		enabled: !!customerId,
@@ -287,24 +319,36 @@ export const useDashboardOrdersQuery = (options = {}) => {
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/orders");
-			const orders = response.data?.data ?? [];
-
-			// Calculate order stats
-			const pending = orders.filter((o) => o.status === "pending").length;
-			const completed = orders.filter((o) => o.status === "completed").length;
-			const totalRevenue = orders
-				.filter((o) => o.paymentStatus === "paid")
-				.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-			return {
-				orders,
-				total: orders.length,
-				pending,
-				completed,
-				revenue: totalRevenue,
-				recentOrders: orders.slice(0, 5),
-			};
+			// Prefer server-side aggregate stats for correctness
+			try {
+				const statsRes = await apiClient.get("/admin/orders/stats");
+				const data = statsRes.data?.data ?? statsRes.data;
+				return {
+					orders: [],
+					total: data?.totalOrders ?? 0,
+					pending: data?.pendingCount ?? 0,
+					completed: data?.completedCount ?? 0,
+					revenue: data?.paidRevenue ?? 0,
+					recentOrders: data?.recentOrders ?? [],
+				};
+			} catch {
+				// Fallback to fetching orders list (may be paginated)
+				const response = await apiClient.get("/orders");
+				const orders = response.data?.data ?? [];
+				const pending = orders.filter((o) => o.status === "pending").length;
+				const completed = orders.filter((o) => o.status === "completed").length;
+				const totalRevenue = orders
+					.filter((o) => o.paymentStatus === "paid")
+					.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+				return {
+					orders,
+					total: orders.length,
+					pending,
+					completed,
+					revenue: totalRevenue,
+					recentOrders: orders.slice(0, 5),
+				};
+			}
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {
@@ -328,20 +372,34 @@ export const useDashboardCoursesQuery = (options = {}) => {
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
-			const response = await apiClient.get("/courses");
-			const courses = response.data || [];
+			// Try admin stats endpoint first for accurate, cheap aggregates
+			try {
+				const statsRes = await apiClient.get("/admin/courses/stats");
+				const data = statsRes.data?.data ?? statsRes.data;
+				const total = data?.totalCourses ?? 0;
+				const enrolled = data?.totalEnrollments ?? 0;
+				return { courses: [], total, enrolled };
+			} catch {
+				// Fallback to fetching courses list and computing
+				const response = await apiClient.get("/courses");
+				const payload = response.data;
+				const courses = Array.isArray(payload?.data)
+					? payload.data
+					: Array.isArray(payload)
+					? payload
+					: [];
 
-			// Calculate total enrolled students across all courses
-			const totalEnrolled = courses.reduce(
-				(sum, course) => sum + (course.enrolledStudents?.length || 0),
-				0
-			);
+				const totalEnrolled = courses.reduce(
+					(sum, course) => sum + (course.enrolledStudents?.length || 0),
+					0
+				);
 
-			return {
-				courses,
-				total: courses.length,
-				enrolled: totalEnrolled,
-			};
+				return {
+					courses,
+					total: courses.length,
+					enrolled: totalEnrolled,
+				};
+			}
 		},
 		staleTime: 1000 * 60,
 		onError: (error) => {

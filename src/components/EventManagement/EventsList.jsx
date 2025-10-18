@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	useDeleteEventMutation,
 	useEventsQuery,
@@ -36,9 +36,13 @@ const EventsList = () => {
 	// Local edit state
 	const [selectedEvent, setSelectedEvent] = useState(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [thumbnailPreview, setThumbnailPreview] = useState(null);
+	const [thumbnailFile, setThumbnailFile] = useState(null);
 
 	const handleEditClick = (event) => {
 		setSelectedEvent(JSON.parse(JSON.stringify(event)));
+		setThumbnailPreview(event?.thumbnail || null);
+		setThumbnailFile(null);
 		setIsModalOpen(true);
 	};
 
@@ -95,12 +99,29 @@ const EventsList = () => {
 
 		const formData = new FormData();
 		formData.append("payload", JSON.stringify(payload));
+		if (thumbnailFile) {
+			formData.append("thumbnail", thumbnailFile);
+		}
 
 		updateEventMutation.mutate({
 			eventId: selectedEvent._id,
 			payload: formData,
 		});
 	};
+
+	const handleThumbnailChange = (e) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		setThumbnailFile(file);
+		setThumbnailPreview(URL.createObjectURL(file));
+	};
+
+	useEffect(() => {
+		if (!isModalOpen) {
+			setThumbnailFile(null);
+			setThumbnailPreview(null);
+		}
+	}, [isModalOpen]);
 
 	// Client-side search filter
 	const filtered = useMemo(() => {
@@ -167,34 +188,45 @@ const EventsList = () => {
 								key={event._id}
 								className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
 							>
-								<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-									<div>
-										<h3 className="text-lg font-semibold text-gray-800">
-											{event.title}
-										</h3>
-										<p className="text-sm text-gray-600 mt-1 line-clamp-2">
-											{event.description}
-										</p>
-										<div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-3">
-											<span>📅 {timeRange}</span>
-											{isVirtual ? (
-												<span>
-													🖥️ Virtual{" "}
-													{event.virtualPlatform?.name
-														? `(${event.virtualPlatform.name})`
-														: ""}
-												</span>
-											) : (
-												<span>📍 {event.location || "TBD"}</span>
-											)}
-											{typeof event.entryAmount === "number" && (
-												<span>🎟️ ₹{event.entryAmount}</span>
-											)}
-											{event.capacity && <span>👥 Cap: {event.capacity}</span>}
-											{Array.isArray(event.topics) &&
-												event.topics.length > 0 && (
-													<span>🏷️ {event.topics.join(", ")}</span>
+								<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+									<div className="flex items-start gap-3">
+										{event.thumbnail ? (
+											<img
+												src={event.thumbnail}
+												alt={event.title}
+												className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+											/>
+										) : null}
+										<div>
+											<h3 className="text-lg font-semibold text-gray-800">
+												{event.title}
+											</h3>
+											<p className="text-sm text-gray-600 mt-1 line-clamp-2">
+												{event.description}
+											</p>
+											<div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-3">
+												<span>📅 {timeRange}</span>
+												{isVirtual ? (
+													<span>
+														🖥️ Virtual{" "}
+														{event.virtualPlatform?.name
+															? `(${event.virtualPlatform.name})`
+															: ""}
+													</span>
+												) : (
+													<span>📍 {event.location || "TBD"}</span>
 												)}
+												{typeof event.entryAmount === "number" && (
+													<span>🎟️ ₹{event.entryAmount}</span>
+												)}
+												{event.capacity && (
+													<span>👥 Cap: {event.capacity}</span>
+												)}
+												{Array.isArray(event.topics) &&
+													event.topics.length > 0 && (
+														<span>🏷️ {event.topics.join(", ")}</span>
+													)}
+											</div>
 										</div>
 									</div>
 
@@ -226,6 +258,36 @@ const EventsList = () => {
 						<h2 className="text-lg font-semibold mb-4">Edit Event</h2>
 
 						<div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+							{/* Thumbnail editor */}
+							<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center gap-4">
+								<input
+									id="editThumbnailInput"
+									type="file"
+									accept="image/*"
+									onChange={handleThumbnailChange}
+									className="hidden"
+								/>
+								{thumbnailPreview || selectedEvent.thumbnail ? (
+									<img
+										src={thumbnailPreview || selectedEvent.thumbnail}
+										alt="Event thumbnail"
+										className="w-20 h-20 rounded-lg object-cover"
+									/>
+								) : (
+									<div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-2xl">
+										+
+									</div>
+								)}
+								<button
+									type="button"
+									onClick={() =>
+										document.getElementById("editThumbnailInput")?.click()
+									}
+									className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+								>
+									{thumbnailPreview ? "Change Thumbnail" : "Add Thumbnail"}
+								</button>
+							</div>
 							<input
 								type="text"
 								name="title"

@@ -127,111 +127,112 @@ const ServiceBookings = () => {
 								<th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
 									Status
 								</th>
-								<th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-									Actions
-								</th>
+								{/* Actions column removed */}
 							</tr>
 						</thead>
 						<tbody>
 							{bookings.length === 0 ? (
 								<tr>
 									<td
-										colSpan="8"
+										colSpan="7"
 										className="px-6 py-8 text-center text-gray-500"
 									>
 										No service bookings found.
 									</td>
 								</tr>
 							) : (
-								bookings.map((booking) => (
-									<tr key={booking._id} className="border-b hover:bg-gray-50">
-										<td className="px-6 py-4 font-medium">
-											{booking.orderNumber}
-										</td>
-										<td className="px-6 py-4">
-											{formatDate(booking.createdAt)}
-										</td>
-										<td className="px-6 py-4">
-											<div>
-												<p className="font-medium">
-													{booking.user?.name || "N/A"}
-												</p>
-												<p className="text-sm text-gray-500">
-													{booking.user?.email}
-												</p>
-											</div>
-										</td>
-										<td className="px-6 py-4">
-											{booking.items
-												?.filter((item) =>
-													["service", "package", "consultation"].includes(
-														item.itemType
-													)
+								bookings
+									.filter(
+										(booking) =>
+											Array.isArray(booking.items) &&
+											booking.items.some((item) =>
+												["service", "package", "consultation"].includes(
+													item.itemType
 												)
-												.map((item, idx) => (
-													<div key={idx} className="mb-1">
-														<p className="font-medium text-sm">{item.title}</p>
-													</div>
-												))}
-										</td>
-										<td className="px-6 py-4">
-											{booking.items
-												?.filter((item) =>
-													["service", "package", "consultation"].includes(
-														item.itemType
-													)
-												)
-												.map((item, idx) => (
-													<span
-														key={idx}
-														className={`px-2 py-1 rounded-full text-xs ${getServiceTypeBadgeColor(
+											)
+									)
+									.map((booking) => (
+										<tr key={booking._id} className="border-b hover:bg-gray-50">
+											<td className="px-6 py-4 font-medium">
+												{booking.orderNumber}
+											</td>
+											<td className="px-6 py-4">
+												{formatDate(booking.createdAt)}
+											</td>
+											<td className="px-6 py-4">
+												<div>
+													<p className="font-medium">
+														{booking.user?.name || "N/A"}
+													</p>
+													<p className="text-sm text-gray-500">
+														{booking.user?.email}
+													</p>
+												</div>
+											</td>
+											<td className="px-6 py-4">
+												{booking.items
+													?.filter((item) =>
+														["service", "package", "consultation"].includes(
 															item.itemType
-														)} block mb-1 w-fit`}
-													>
-														{getServiceTypeLabel(
-															item.itemType,
-															item.serviceDetails?.serviceType
-														)}
-													</span>
-												))}
-										</td>
-										<td className="px-6 py-4 font-medium">
-											₹{booking.totalAmount}
-										</td>
-										<td className="px-6 py-4">
-											<select
-												value={booking.status}
-												onChange={(e) =>
-													handleStatusUpdate(booking._id, e.target.value)
-												}
-												className={`px-2 py-1 rounded text-sm border ${
-													booking.status === "completed"
-														? "bg-green-50 text-green-800 border-green-300"
-														: booking.status === "processing"
-														? "bg-blue-50 text-blue-800 border-blue-300"
-														: booking.status === "cancelled"
-														? "bg-red-50 text-red-800 border-red-300"
-														: "bg-yellow-50 text-yellow-800 border-yellow-300"
-												}`}
-											>
-												<option value="pending">Pending</option>
-												<option value="processing">Processing</option>
-												<option value="completed">Completed</option>
-												<option value="cancelled">Cancelled</option>
-											</select>
-										</td>
-										<td className="px-6 py-4">
-											<button
-												onClick={() =>
-													(window.location.href = `/admin/orders/${booking._id}`)
-												}
-												className="text-blue-600 hover:underline text-sm"
-											>
-												View Details
-											</button>
-										</td>
-									</tr>
-								))
+														)
+													)
+													.map((item, idx) => (
+														<div key={idx} className="mb-1">
+															<p className="font-medium text-sm">
+																{item.title}
+															</p>
+														</div>
+													))}
+											</td>
+											<td className="px-6 py-4">
+												{booking.items
+													?.filter((item) =>
+														["service", "package", "consultation"].includes(
+															item.itemType
+														)
+													)
+													.map((item, idx) => (
+														<span
+															key={idx}
+															className={`px-2 py-1 rounded-full text-xs ${getServiceTypeBadgeColor(
+																item.itemType
+															)} block mb-1 w-fit`}
+														>
+															{getServiceTypeLabel(
+																item.itemType,
+																item.serviceDetails?.serviceType
+															)}
+														</span>
+													))}
+											</td>
+											<td className="px-6 py-4 font-medium">
+												₹{booking.totalAmount}
+											</td>
+											<td className="px-6 py-4">
+												<select
+													value={booking.status}
+													onChange={(e) =>
+														handleStatusUpdate(booking._id, e.target.value)
+													}
+													className={`px-2 py-1 rounded text-sm border ${
+														booking.status === "completed"
+															? "bg-green-50 text-green-800 border-green-300"
+															: booking.status === "processing"
+															? "bg-blue-50 text-blue-800 border-blue-300"
+															: booking.status === "cancelled"
+															? "bg-red-50 text-red-800 border-red-300"
+															: "bg-yellow-50 text-yellow-800 border-yellow-300"
+													}`}
+												>
+													<option value="pending">Pending</option>
+													<option value="processing">Processing</option>
+													<option value="completed">Completed</option>
+													<option value="cancelled">Cancelled</option>
+												</select>
+											</td>
+											{/* Actions cell removed */}
+										</tr>
+									))
 							)}
 						</tbody>
 					</table>

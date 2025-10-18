@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import { useCourseQuery } from "../hooks/useCoursesApi";
-import { useStudentProgressQuery } from "../hooks/useAdminApi";
+import { useCourseEnrolledStudentsQuery } from "../hooks/useAdminApi";
 
 export default function CourseDetailPage() {
 	const { courseId } = useParams();
@@ -17,13 +17,13 @@ export default function CourseDetailPage() {
 		isError: isCourseError,
 	} = useCourseQuery(courseId);
 
-	// Fetch all student progress to find students enrolled in this course
+	// Fetch student progress filtered by this course
 	const {
 		data: progressData,
 		isLoading: isProgressLoading,
 		isFetching: isProgressFetching,
 		isError: isProgressError,
-	} = useStudentProgressQuery();
+	} = useCourseEnrolledStudentsQuery(courseId);
 
 	const course = courseData;
 	const allProgress = useMemo(
@@ -31,21 +31,19 @@ export default function CourseDetailPage() {
 		[progressData]
 	);
 
-	// Filter progress entries for this specific course
+	// Map progress entries into enriched student rows
 	const enrolledStudents = useMemo(() => {
-		return allProgress
-			.filter((p) => p.course?._id === courseId)
-			.map((p) => ({
-				...p.student,
-				progressPercent: p.progressPercent,
-				videosCompleted: p.videosCompleted,
-				videosTotal: p.videosTotal,
-				quizzesCompleted: p.quizzesCompleted,
-				quizzesTotal: p.quizzesTotal,
-				status: p.status,
-				lastAccessed: p.updatedAt,
-			}));
-	}, [allProgress, courseId]);
+		return allProgress.map((p) => ({
+			...p.student,
+			progressPercent: p.progressPercent,
+			videosCompleted: p.videosCompleted,
+			videosTotal: p.videosTotal,
+			quizzesCompleted: p.quizzesCompleted,
+			quizzesTotal: p.quizzesTotal,
+			status: p.status,
+			lastAccessed: p.updatedAt,
+		}));
+	}, [allProgress]);
 
 	// Filter students by search term
 	const filteredStudents = useMemo(() => {

@@ -9,6 +9,7 @@ import {
 	FaShoppingCart,
 } from "react-icons/fa";
 import BaseCard from "../BaseCard";
+import ImageWithFallback from "../ImageWithFallback";
 
 /**
  * ServiceCard - Reusable card component for services, packages, and consultations
@@ -128,7 +129,7 @@ const ServiceCard = ({
 				{/* Service image */}
 				{service.image && (
 					<div className="mb-4">
-						<img
+						<ImageWithFallback
 							src={service.image}
 							alt={service.title}
 							className="w-full h-40 object-cover rounded-lg"

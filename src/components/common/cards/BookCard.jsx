@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { FaEdit, FaTrash, FaShoppingCart, FaCheck } from "react-icons/fa";
 import BaseCard from "../BaseCard";
+import ImageWithFallback from "../ImageWithFallback";
 
 /**
  * BookCard - Reusable card component for displaying books
@@ -66,7 +67,7 @@ const BookCard = ({
 		<BaseCard className="flex flex-col h-full">
 			{/* Book Image */}
 			<div className="relative w-full h-48 bg-gray-100">
-				<img
+				<ImageWithFallback
 					src={book.coverImage || book.image}
 					alt={book.title}
 					className="w-full h-full object-cover"
