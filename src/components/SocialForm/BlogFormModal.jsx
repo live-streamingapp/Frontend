@@ -4,6 +4,7 @@ import {
 	useUpdateBlogMutation,
 	useDeleteBlogMutation,
 } from "../../hooks/useContentApi";
+import { getYouTubeEmbedUrl } from "../../utils/youtubeHelpers";
 
 function BlogFormModal({ blog, isOpen, onClose }) {
 	const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ function BlogFormModal({ blog, isOpen, onClose }) {
 		description: "",
 		author: "",
 		tags: "",
+		videoUrl: "",
 		mainImage: null,
 		sections: [],
 	});
@@ -46,6 +48,7 @@ function BlogFormModal({ blog, isOpen, onClose }) {
 				description: blog.description || "",
 				author: blog.author || "",
 				tags: blog.tags ? blog.tags.join(", ") : "",
+				videoUrl: blog.videoUrl || "",
 				sections: blog.sections || [],
 			});
 
@@ -63,6 +66,7 @@ function BlogFormModal({ blog, isOpen, onClose }) {
 			description: "",
 			author: "",
 			tags: "",
+			videoUrl: "",
 			sections: [],
 		});
 		setImageFile(null);
@@ -89,7 +93,16 @@ function BlogFormModal({ blog, isOpen, onClose }) {
 		const formDataToSend = new FormData();
 		formDataToSend.append("title", formData.title);
 		formDataToSend.append("description", formData.description);
-		formDataToSend.append("author", formData.author);
+
+		// Add author if provided
+		if (formData.author && formData.author.trim()) {
+			formDataToSend.append("author", formData.author.trim());
+		}
+
+		// Add video URL if provided
+		if (formData.videoUrl && formData.videoUrl.trim()) {
+			formDataToSend.append("videoUrl", formData.videoUrl.trim());
+		}
 
 		// Convert tags string to array
 		const tagsArray = formData.tags
@@ -186,6 +199,40 @@ function BlogFormModal({ blog, isOpen, onClose }) {
 							className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BB0E00] focus:border-transparent resize-none"
 							placeholder="Enter blog description"
 						/>
+					</div>
+
+					{/* YouTube Video URL */}
+					<div>
+						<label className="block text-sm font-semibold text-gray-700 mb-2">
+							YouTube Video URL (Optional)
+						</label>
+						<input
+							type="url"
+							name="videoUrl"
+							value={formData.videoUrl}
+							onChange={handleChange}
+							className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BB0E00] focus:border-transparent"
+							placeholder="https://www.youtube.com/watch?v=..."
+						/>
+						<p className="mt-1 text-xs text-gray-500">
+							Add a YouTube video to display in the middle of your blog content
+						</p>
+						{formData.videoUrl &&
+							(() => {
+								const embedUrl = getYouTubeEmbedUrl(formData.videoUrl);
+								return embedUrl && embedUrl.includes("youtube.com") ? (
+									<div className="mt-2 w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
+										<iframe
+											src={embedUrl}
+											title="Video Preview"
+											className="w-full h-full"
+											frameBorder="0"
+											allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+											allowFullScreen
+										></iframe>
+									</div>
+								) : null;
+							})()}
 					</div>
 
 					{/* Main Image */}

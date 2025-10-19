@@ -19,23 +19,43 @@ const KundliGenerator = () => {
 
 	const [kundliData, setKundliData] = useState(null);
 	const [showResults, setShowResults] = useState(false);
+	const [activeChartTab, setActiveChartTab] = useState("lagna"); // 'lagna' or 'navamsa'
 
 	const kundliMutation = useGenerateKundli({
 		onSuccess: (responseData) => {
 			try {
-				// Parse the API response - hook already extracts response.data
+				console.log("Raw response data:", responseData);
+
+				// Parse the API response
+				// The hook already extracts and structures the data properly
 				const parsedData = {
 					name: responseData.name,
-					planets: responseData.planets.output,
-					chart: responseData.chart.output,
-					nakshatra: JSON.parse(responseData.nakshatra.output),
-					dasha: JSON.parse(responseData.dasha.output),
+					// Planets data structure: { output: {...planets} }
+					planets: responseData.planets?.output || responseData.planets,
+					// Chart SVG structure: { output: "SVG string" }
+					lagnaChart:
+						responseData.lagnaChart?.output || responseData.lagnaChart,
+					navamsaChart:
+						responseData.navamsaChart?.output || responseData.navamsaChart,
+					// Nakshatra structure: { output: "JSON string" }
+					nakshatra:
+						typeof responseData.nakshatra?.output === "string"
+							? JSON.parse(responseData.nakshatra.output)
+							: responseData.nakshatra,
+					// Dasha structure: { output: "JSON string" }
+					dasha:
+						typeof responseData.dasha?.output === "string"
+							? JSON.parse(responseData.dasha.output)
+							: responseData.dasha,
 				};
+
+				console.log("Parsed kundli data:", parsedData);
 				setKundliData(parsedData);
 				setShowResults(true);
 			} catch (error) {
 				console.error("Error parsing Kundli data:", error);
-				toast.error("Failed to parse Kundli data");
+				console.error("Error details:", error.message, error.stack);
+				toast.error("Failed to parse Kundli data: " + error.message);
 			}
 		},
 		onError: (error) => {
@@ -112,6 +132,7 @@ const KundliGenerator = () => {
 		});
 		setKundliData(null);
 		setShowResults(false);
+		setActiveChartTab("lagna"); // Reset to lagna chart tab
 	};
 
 	return (
@@ -322,17 +343,80 @@ const KundliGenerator = () => {
 							</div>
 						</div>
 
-						{/* Birth Chart */}
+						{/* Birth Charts - Lagna and Navamsa with Tabs */}
 						<div className="bg-white rounded-xl shadow-lg p-6">
 							<h3 className="text-xl font-bold text-gray-800 mb-4">
-								Birth Chart (Rasi Chart)
+								Birth Charts
 							</h3>
+
+							{/* Chart Type Tabs - only show if we have multiple charts */}
+							{kundliData?.navamsaChart && (
+								<div className="flex gap-2 mb-4 border-b border-gray-200">
+									<button
+										onClick={() => setActiveChartTab("lagna")}
+										className={`px-4 py-2 font-semibold transition-colors ${
+											activeChartTab === "lagna"
+												? "text-orange-600 border-b-2 border-orange-600"
+												: "text-gray-600 hover:text-gray-800"
+										}`}
+									>
+										Lagna Kundli (D1)
+									</button>
+									<button
+										onClick={() => setActiveChartTab("navamsa")}
+										className={`px-4 py-2 font-semibold transition-colors ${
+											activeChartTab === "navamsa"
+												? "text-orange-600 border-b-2 border-orange-600"
+												: "text-gray-600 hover:text-gray-800"
+										}`}
+									>
+										Navamsa (D9)
+									</button>
+								</div>
+							)}
+
+							{/* Chart Display */}
 							<div className="flex justify-center">
-								{kundliData?.chart ? (
-									<div
-										dangerouslySetInnerHTML={{ __html: kundliData.chart }}
-										className="max-w-full"
-									/>
+								{activeChartTab === "lagna" && kundliData?.lagnaChart ? (
+									<div>
+										<div
+											dangerouslySetInnerHTML={{
+												__html: kundliData.lagnaChart,
+											}}
+											className="max-w-full"
+										/>
+										<p className="text-sm text-gray-600 text-center mt-2">
+											Lagna Kundli (Rasi Chart) - Shows planetary positions in
+											houses based on ascendant
+										</p>
+									</div>
+								) : activeChartTab === "navamsa" && kundliData?.navamsaChart ? (
+									<div>
+										<div
+											dangerouslySetInnerHTML={{
+												__html: kundliData.navamsaChart,
+											}}
+											className="max-w-full"
+										/>
+										<p className="text-sm text-gray-600 text-center mt-2">
+											Navamsa Chart (D9) - Important divisional chart for
+											marriage and spiritual matters
+										</p>
+									</div>
+								) : kundliData?.lagnaChart ? (
+									// Fallback: show lagna chart if navamsa tab is active but no navamsa data
+									<div>
+										<div
+											dangerouslySetInnerHTML={{
+												__html: kundliData.lagnaChart,
+											}}
+											className="max-w-full"
+										/>
+										<p className="text-sm text-gray-600 text-center mt-2">
+											Lagna Kundli (Rasi Chart) - Shows planetary positions in
+											houses based on ascendant
+										</p>
+									</div>
 								) : (
 									<p className="text-gray-500">Chart not available</p>
 								)}

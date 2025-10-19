@@ -41,7 +41,7 @@ const ReviewCard = ({ crsDetails, disableActions = false }) => {
 	const handleAddToCart = () => {
 		// Check if user is logged in
 		if (!currentUser) {
-			navigate("/login");
+			navigate("/auth/login");
 			return;
 		}
 
@@ -55,7 +55,7 @@ const ReviewCard = ({ crsDetails, disableActions = false }) => {
 	const handleBuyCourse = () => {
 		// Check if user is logged in
 		if (!currentUser) {
-			navigate("/login");
+			navigate("/auth/login");
 			return;
 		}
 

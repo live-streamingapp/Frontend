@@ -71,11 +71,16 @@ export const useGenerateKundli = ({ onSuccess, onError } = {}) => {
 			// Make single API call to our backend which handles all the parallel calls
 			const response = await makeKundliAPICall("/generate", requestBody);
 
+			// Handle both old and new response formats
+			const lagnaChart = response.data.lagnaChart || response.data.chart; // Backward compatibility
+			const navamsaChart = response.data.navamsaChart || null;
+
 			return {
 				name,
 				birthDetails: formData,
 				planets: response.data.planets,
-				chart: response.data.chart,
+				lagnaChart: lagnaChart, // Lagna/Rasi chart (D1)
+				navamsaChart: navamsaChart, // Navamsa chart (D9) - may be null in old responses
 				nakshatra: response.data.nakshatra,
 				dasha: response.data.dasha,
 			};

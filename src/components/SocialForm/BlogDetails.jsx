@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../utils/apiClient";
 import { useDeleteBlogMutation } from "../../hooks/useContentApi";
+import { getYouTubeEmbedUrl } from "../../utils/youtubeHelpers";
 import BlogFormModal from "./BlogFormModal";
 
 function BlogDetails() {
@@ -155,6 +156,31 @@ function BlogDetails() {
 							{blog.description}
 						</p>
 					</div>
+
+					{/* YouTube Video (if available) */}
+					{blog.videoUrl && (
+						<div className="mt-8 mb-8">
+							<div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+								{(() => {
+									const embedUrl = getYouTubeEmbedUrl(blog.videoUrl);
+									return embedUrl && embedUrl.includes("youtube.com") ? (
+										<iframe
+											src={embedUrl}
+											title="Blog Video"
+											className="w-full h-full"
+											frameBorder="0"
+											allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+											allowFullScreen
+										></iframe>
+									) : (
+										<div className="w-full h-full flex items-center justify-center text-white">
+											<p>Video unavailable</p>
+										</div>
+									);
+								})()}
+							</div>
+						</div>
+					)}
 
 					{/* Sections */}
 					{blog.sections && blog.sections.length > 0 && (

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../utils/apiClient";
+import { getYouTubeEmbedUrl } from "../../utils/youtubeHelpers";
 import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
 
 function PodcastDetails() {
@@ -23,16 +24,6 @@ function PodcastDetails() {
 
 	const handleBack = () => {
 		navigate("/podcast");
-	};
-
-	// Extract video ID from YouTube URL
-	const getYouTubeEmbedUrl = (url) => {
-		if (!url) return null;
-		const regExp =
-			/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-		const match = url.match(regExp);
-		const videoId = match && match[7].length === 11 ? match[7] : null;
-		return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
 	};
 
 	if (isLoading) {
@@ -66,7 +57,7 @@ function PodcastDetails() {
 		);
 	}
 
-	const embedUrl = getYouTubeEmbedUrl(podcast.url);
+	const embedUrl = getYouTubeEmbedUrl(podcast?.url);
 
 	return (
 		<div className="min-h-screen bg-gray-50">

@@ -2,12 +2,22 @@ import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../utils/apiClient";
 
-// Initiate PayU checkout; returns { payuUrl, params }
+// Initiate PayU checkout; returns { payuUrl, params } or { free: true, order }
 export const useInitiatePayUMutation = (options = {}) => {
 	const { onSuccess, onError, ...rest } = options;
 	return useMutation({
 		mutationFn: async () => {
 			const resp = await apiClient.post("/payments/payu/initiate", {});
+
+			// Check if this is a free order
+			if (resp?.data?.free) {
+				return {
+					free: true,
+					order: resp?.data?.order,
+				};
+			}
+
+			// Regular paid order
 			const payload = resp?.data?.data;
 			if (!payload?.payuUrl || !payload?.params) {
 				throw new Error("Invalid payment response from server");

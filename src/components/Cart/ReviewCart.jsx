@@ -47,7 +47,18 @@ export default function ReviewCart() {
 		}
 		try {
 			setIsProcessingOrder(true);
-			const payload = await initiatePayU();
+			const response = await initiatePayU();
+
+			// Check if this is a free order (no payment gateway needed)
+			if (response?.free) {
+				toast.success("Free course added successfully!");
+				// Redirect to my-orders page with success status
+				window.location.href = `/my-orders?payment=success&order=${response.order?._id}`;
+				return;
+			}
+
+			// Regular paid order - proceed to PayU
+			const payload = response;
 			if (!payload?.payuUrl || !payload?.params) {
 				throw new Error("Invalid payment response");
 			}
