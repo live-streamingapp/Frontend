@@ -191,6 +191,28 @@ const SessionPageEnhanced = () => {
 					}
 				});
 
+				// Connection state monitoring
+				clientRef.current.on(
+					"connection-state-change",
+					(curState, prevState) => {
+						console.log(`🔗 Connection: ${prevState} → ${curState}`);
+
+						if (curState === "DISCONNECTED") {
+							console.warn("⚠️ Disconnected from Agora");
+							toast.error("Connection lost. Please rejoin the session.");
+						} else if (curState === "RECONNECTING") {
+							console.warn("⚠️ Reconnecting to Agora...");
+							toast.info("Reconnecting...");
+						} else if (
+							curState === "CONNECTED" &&
+							prevState === "RECONNECTING"
+						) {
+							console.log("✅ Reconnected to Agora");
+							toast.success("Reconnected successfully!");
+						}
+					}
+				);
+
 				// Keep tiles when users turn off camera; show placeholder instead of removing
 				clientRef.current.on("user-unpublished", (agoraUser) => {
 					setRemoteUsers((prev) => {
@@ -263,21 +285,58 @@ const SessionPageEnhanced = () => {
 						localVideoRef.current.play(videoContainerRef.current);
 					}
 
-					await clientRef.current.publish(localVideoRef.current);
-					console.log("✅ Video published");
+					// Check client still exists before publishing
+					if (
+						clientRef.current &&
+						clientRef.current.connectionState === "CONNECTED"
+					) {
+						await clientRef.current.publish(localVideoRef.current);
+						console.log("✅ Video published");
+					} else {
+						console.warn("⚠️ Client not connected, skipping video publish");
+						localVideoRef.current.close();
+						localVideoRef.current = null;
+						setIsVideoOn(false);
+					}
 				} catch (err) {
 					console.error("❌ Video failed:", err.message);
-					localVideoRef.current = null;
+					if (localVideoRef.current) {
+						try {
+							localVideoRef.current.close();
+						} catch {
+							// Ignore close errors
+						}
+						localVideoRef.current = null;
+					}
 					setIsVideoOn(false);
 				}
 
 				try {
 					localAudioRef.current = await AgoraRTC.createMicrophoneAudioTrack();
-					await clientRef.current.publish(localAudioRef.current);
-					console.log("✅ Audio published");
+
+					// Check client still exists before publishing
+					if (
+						clientRef.current &&
+						clientRef.current.connectionState === "CONNECTED"
+					) {
+						await clientRef.current.publish(localAudioRef.current);
+						console.log("✅ Audio published");
+					} else {
+						console.warn("⚠️ Client not connected, skipping audio publish");
+						localAudioRef.current.close();
+						localAudioRef.current = null;
+						setIsAudioOn(false);
+					}
 				} catch (err) {
 					console.error("❌ Audio failed:", err.message);
-					localAudioRef.current = null;
+					if (localAudioRef.current) {
+						try {
+							localAudioRef.current.close();
+						} catch {
+							// Ignore close errors
+						}
+						localAudioRef.current = null;
+					}
 					setIsAudioOn(false);
 				}
 
@@ -286,6 +345,16 @@ const SessionPageEnhanced = () => {
 					console.log("⚠️ Both tracks failed - publishing dummy track");
 
 					try {
+						// Check client still exists before creating dummy track
+						if (
+							!clientRef.current ||
+							clientRef.current.connectionState !== "CONNECTED"
+						) {
+							console.warn("⚠️ Client not connected, skipping dummy track");
+							toast.error("Could not join session - connection lost");
+							return;
+						}
+
 						// Create 1x1 black canvas (minimal bandwidth)
 						const canvas = document.createElement("canvas");
 						canvas.width = 1;
@@ -334,6 +403,8 @@ const SessionPageEnhanced = () => {
 		// Cleanup on unmount: mirror leave flow to avoid dangling camera/mic
 		const containerEl = videoContainerRef.current;
 		return () => {
+			console.log("=== Cleanup: Leaving Agora ===");
+
 			if (clientRef.current) {
 				try {
 					const toUnpublish = [];
@@ -341,51 +412,70 @@ const SessionPageEnhanced = () => {
 					if (localAudioRef.current) toUnpublish.push(localAudioRef.current);
 					if (screenTrackRef.current) toUnpublish.push(screenTrackRef.current);
 					if (dummyTrackRef.current) toUnpublish.push(dummyTrackRef.current);
-					if (toUnpublish.length) {
+
+					if (
+						toUnpublish.length &&
+						clientRef.current.connectionState === "CONNECTED"
+					) {
 						clientRef.current
 							.unpublish(toUnpublish)
-							.catch((e) => console.warn("Unpublish on cleanup failed", e));
+							.then(() => console.log("✅ Tracks unpublished"))
+							.catch((e) => console.warn("⚠️ Unpublish on cleanup failed", e));
 					}
 				} catch (e) {
-					console.warn("Error during unpublish on cleanup", e);
+					console.warn("⚠️ Error during unpublish on cleanup", e);
 				}
 
+				// Close and stop all tracks
 				safe(() => {
 					if (localVideoRef.current) {
 						localVideoRef.current.stop();
 						localVideoRef.current.close();
+						console.log("✅ Video track closed");
 					}
 				}, "Local video cleanup error");
+
 				safe(() => {
 					if (localAudioRef.current) {
 						localAudioRef.current.stop();
 						localAudioRef.current.close();
+						console.log("✅ Audio track closed");
 					}
 				}, "Local audio cleanup error");
+
 				safe(() => {
 					if (screenTrackRef.current) {
 						screenTrackRef.current.stop();
 						screenTrackRef.current.close();
+						console.log("✅ Screen track closed");
 					}
 				}, "Screen track cleanup error");
+
 				safe(() => {
 					if (dummyTrackRef.current) {
 						dummyTrackRef.current.stop();
 						dummyTrackRef.current.close();
+						console.log("✅ Dummy track closed");
 					}
 				}, "Dummy track cleanup error");
 
 				localVideoRef.current = null;
 				localAudioRef.current = null;
 				screenTrackRef.current = null;
+				dummyTrackRef.current = null;
 
 				if (containerEl) {
 					containerEl.innerHTML = "";
 				}
 
-				clientRef.current
-					.leave()
-					.catch((e) => console.warn("Leave on cleanup error", e));
+				// Leave the channel
+				if (clientRef.current.connectionState !== "DISCONNECTED") {
+					clientRef.current
+						.leave()
+						.then(() => console.log("✅ Left Agora channel"))
+						.catch((e) => console.warn("⚠️ Leave on cleanup error", e));
+				}
+
 				clientRef.current.removeAllListeners();
 				clientRef.current = null;
 			}
