@@ -403,7 +403,14 @@ const SessionPageEnhanced = () => {
 		// Cleanup on unmount: mirror leave flow to avoid dangling camera/mic
 		const containerEl = videoContainerRef.current;
 		return () => {
+			// Skip cleanup if already left or joining was cancelled
+			if (hasLeftRef.current || !clientRef.current) {
+				console.log("⏭️ Cleanup skipped (already left or not joined)");
+				return;
+			}
+
 			console.log("=== Cleanup: Leaving Agora ===");
+			hasLeftRef.current = true;
 
 			if (clientRef.current) {
 				try {
