@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { MdLanguage } from "react-icons/md";
 import { IoCalendarSharp } from "react-icons/io5";
 import { PiSubtitlesFill } from "react-icons/pi";
@@ -22,15 +21,17 @@ import { selectCurrentUser } from "../../store/slices/authSlice";
 import { ROLES } from "../../utils/constants";
 import { useEnrolledCoursesQuery } from "../../hooks/useEnrolledCoursesApi";
 import { useCourseSessionsQuery } from "../../hooks/useSessionApi";
+import { useCourseQuery } from "../../hooks/useCoursesApi";
 
 const CourseDetails = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
-	const [crsDetails, setCrsDetails] = useState(null);
-	const [loading, setLoading] = useState(true);
 	const currentUser = useAppSelector(selectCurrentUser);
 	const isAdmin =
 		currentUser?.role === ROLES.ADMIN || currentUser?.role === ROLES.ASTROLOGER;
+
+	// Fetch course details using React Query
+	const { data: crsDetails, isLoading: loading } = useCourseQuery(id);
 
 	// Check if user is enrolled
 	const { data: enrolledCourses = [] } = useEnrolledCoursesQuery();
@@ -45,23 +46,6 @@ const CourseDetails = () => {
 		// Navigate to the enhanced session page
 		navigate(`/session/${sessionId}`);
 	};
-
-	// Fetch course details
-	useEffect(() => {
-		const fetchCourse = async () => {
-			try {
-				const res = await axios.get(
-					`${import.meta.env.VITE_BACKEND_URL}/courses/${id}`
-				);
-				setCrsDetails(res.data.data);
-			} catch (err) {
-				console.error("Error fetching course:", err);
-			} finally {
-				setLoading(false);
-			}
-		};
-		fetchCourse();
-	}, [id]);
 
 	if (loading) return <p className="text-center mt-10">Loading course...</p>;
 	if (!crsDetails) return <p className="text-center mt-10">Course not found</p>;

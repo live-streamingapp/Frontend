@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useMemo } from "react";
+import { useServicesQuery } from "../../hooks/useServicesApi";
 import CommonConsultation from "./CommonConsultation";
 
 const planStyles = {
@@ -34,43 +34,31 @@ const getPlanTier = (price) => {
 };
 
 const NumeroVastu = () => {
-	const [plans, setPlans] = useState([]);
-	const [loading, setLoading] = useState(true);
+	// Fetch services using React Query
+	const { data: services = [], isLoading: loading } = useServicesQuery({
+		params: {
+			serviceType: "package",
+			category: "numerology",
+			isActive: true,
+		},
+	});
 
-	useEffect(() => {
-		const fetchPackages = async () => {
-			try {
-				const response = await axios.get(
-					`${
-						import.meta.env.VITE_BACKEND_URL
-					}/services?serviceType=package&category=numerology&isActive=true`
-				);
+	// Transform and sort the plans
+	const plans = useMemo(() => {
+		const transformed = services.map((service) => ({
+			name: getPlanTier(service.price),
+			price: service.price.toLocaleString("en-IN"),
+			desc: service.description,
+			features: service.features || [],
+		}));
 
-				// Transform API data to match the expected format
-				const transformedPlans = response.data.data.map((service) => ({
-					name: getPlanTier(service.price),
-					price: service.price.toLocaleString("en-IN"),
-					desc: service.description,
-					features: service.features || [],
-				}));
-
-				// Sort by price
-				transformedPlans.sort((a, b) => {
-					const priceA = parseInt(a.price.replace(/,/g, ""));
-					const priceB = parseInt(b.price.replace(/,/g, ""));
-					return priceA - priceB;
-				});
-
-				setPlans(transformedPlans);
-			} catch (error) {
-				console.error("Error fetching packages:", error);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchPackages();
-	}, []);
+		// Sort by price
+		return transformed.sort((a, b) => {
+			const priceA = parseInt(a.price.replace(/,/g, ""));
+			const priceB = parseInt(b.price.replace(/,/g, ""));
+			return priceA - priceB;
+		});
+	}, [services]);
 
 	if (loading) {
 		return (

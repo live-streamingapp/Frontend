@@ -1,12 +1,23 @@
 import { useParams } from "react-router-dom";
-import { LuDownload } from "react-icons/lu";
 import { RiShareFill } from "react-icons/ri";
 import { GoDotFill } from "react-icons/go";
 import { useBlogQuery } from "../../hooks/useContentApi";
+import toast from "react-hot-toast";
 
 const BlogDetails = () => {
 	const { id } = useParams();
 	const { data: blog, isLoading, isError } = useBlogQuery(id);
+
+	const handleShare = async () => {
+		const url = window.location.href;
+		try {
+			await navigator.clipboard.writeText(url);
+			toast.success("Blog URL copied to clipboard!");
+		} catch (err) {
+			console.error("Failed to copy:", err);
+			toast.error("Failed to copy URL");
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -126,19 +137,16 @@ const BlogDetails = () => {
 				))}
 			</div>
 			<div className="flex items-center gap-[1rem] mt-[2rem]">
-				<p className="flex flex-col items-center">
+				<button
+					onClick={handleShare}
+					className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+				>
 					<div className="flex items-center justify-center rounded-full border min-shadow border-gray-300 w-[35px] h-[35px]">
 						<RiShareFill size={"1.15rem"} className="text-gray-700" />
 					</div>
 					<span className="text-[.75rem] text-gray-700">Share</span>
-				</p>
-				<p className="flex flex-col items-center">
-					<div className="flex items-center justify-center rounded-full border min-shadow border-gray-300 w-[35px] h-[35px]">
-						<LuDownload size={"1.15rem"} className="text-gray-700" />
-					</div>
-					<span className="text-[.75rem] text-gray-700">Download</span>
-				</p>
-			</div>{" "}
+				</button>
+			</div>
 		</div>
 	);
 };

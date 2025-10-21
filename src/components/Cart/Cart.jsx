@@ -277,14 +277,6 @@ const Cart = () => {
 							>
 								{isMutating ? "Processing..." : "Proceed to Checkout"}
 							</button>
-
-							<button
-								disabled={isMutating}
-								onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-								className="w-full py-3 px-4 rounded-lg font-medium border border-red-600 text-red-600 hover:bg-red-50 mt-3 transition-colors disabled:opacity-50"
-							>
-								View Cart Items
-							</button>
 						</div>
 					</div>
 				</div>

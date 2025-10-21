@@ -8,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { logout } from "../../store/slices/authSlice";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useEnrolledCoursesQuery } from "../../hooks/useEnrolledCoursesApi";
+import { useMyOrdersQuery } from "../../hooks/useOrdersApi";
 
 const Profile = () => {
 	const navigate = useNavigate();
@@ -22,12 +22,14 @@ const Profile = () => {
 		ordersCount: 0,
 		studyTime: 0,
 	});
-	// Orders loading handled separately; overall loading derives from both sources
-	const [ordersLoading, setOrdersLoading] = useState(true);
 
-	// Use the same data source as My Courses
+	// Use React Query hooks for data fetching
 	const { data: enrolledCourses = [], isLoading: enrolledCoursesLoading } =
 		useEnrolledCoursesQuery();
+
+	const { data: ordersData, isLoading: ordersLoading } = useMyOrdersQuery({
+		params: { limit: 1 },
+	});
 
 	const menuItems = [
 		{
@@ -52,38 +54,15 @@ const Profile = () => {
 		},
 	];
 
+	// Sync orders count from React Query data
 	useEffect(() => {
-		const fetchOrdersCount = async () => {
-			try {
-				setOrdersLoading(true);
-				let ordersCount = 0;
-				try {
-					const ordersResponse = await axios.get(
-						`${import.meta.env.VITE_BACKEND_URL}/orders/my-orders?limit=1`,
-						{ withCredentials: true }
-					);
-					ordersCount = ordersResponse.data?.pagination?.total || 0;
-				} catch (orderError) {
-					console.error("Error fetching orders:", orderError);
-					// Don't show error toast, just use 0 as count
-				}
-				setStats((prev) => ({
-					...prev,
-					ordersCount,
-				}));
-			} catch (error) {
-				console.error("Error fetching orders count:", error);
-			} finally {
-				setOrdersLoading(false);
-			}
-		};
-
-		if (currentUser) {
-			fetchOrdersCount();
-		} else {
-			navigate("/auth/login");
+		if (ordersData?.pagination?.total !== undefined) {
+			setStats((prev) => ({
+				...prev,
+				ordersCount: ordersData.pagination.total,
+			}));
 		}
-	}, [currentUser, navigate]);
+	}, [ordersData]);
 
 	// Sync enrolled courses count from the authoritative source
 	useEffect(() => {

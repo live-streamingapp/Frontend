@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useAboutQuery } from "../../hooks/useContentApi";
 import { MdCall } from "react-icons/md";
 import { IoMdMail } from "react-icons/io";
 import { GoDotFill } from "react-icons/go";
@@ -7,26 +6,8 @@ import { GoDotFill } from "react-icons/go";
 import aboutus from "../../assets/about.jpg";
 
 export default function AboutUs() {
-	const [aboutData, setAboutData] = useState(null);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		const fetchAbout = async () => {
-			try {
-				const res = await axios.get(
-					`${import.meta.env.VITE_BACKEND_URL}/about`
-				);
-				// replace with your actual API endpoint
-				console.log("about", res.data.data[0]);
-				setAboutData(res.data.data[0]); // since API returns an array
-			} catch (err) {
-				console.error("Error fetching about data:", err);
-			} finally {
-				setLoading(false);
-			}
-		};
-		fetchAbout();
-	}, []);
+	// Fetch about data using React Query
+	const { data: aboutData, isLoading: loading } = useAboutQuery();
 
 	if (loading) return <p className="text-center py-10">Loading...</p>;
 	if (!aboutData) return <p className="text-center py-10">No data found</p>;

@@ -141,7 +141,7 @@ const ReviewCard = ({ crsDetails, disableActions = false }) => {
 					"Unavailable for Admins"
 				) : isEnrolled ? (
 					<span className="flex items-center justify-center gap-2">
-						<FaCheck /> Enrolled - View Course
+						<FaCheck /> Enrolled
 					</span>
 				) : isInCart ? (
 					"Go to Cart & Checkout"
@@ -189,11 +189,6 @@ const ReviewCard = ({ crsDetails, disableActions = false }) => {
 			{actionDisabled && (
 				<p className="mt-3 text-xs text-center text-amber-600">
 					Purchase actions are limited to student accounts.
-				</p>
-			)}
-			{isEnrolled && !actionDisabled && (
-				<p className="mt-3 text-xs text-center text-green-600">
-					You are enrolled in this course. Click above to continue learning.
 				</p>
 			)}
 			{isInCart && !isEnrolled && !actionDisabled && (

@@ -18,6 +18,30 @@ const invalidateContent = (queryClient, keys = []) => {
 	keys.forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
 };
 
+export const useAboutQuery = (options = {}) => {
+	const { queryKey = ["about"], onError, select, ...queryOptions } = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get("/about");
+			const data = response.data?.data ?? [];
+			return data[0] ?? null; // Return first item or null
+		},
+		staleTime: 1000 * 60 * 5, // 5 minutes - About Us doesn't change frequently
+		onError: (error) => {
+			const message = getErrorMessage(
+				error,
+				"Failed to load about information. Please try again."
+			);
+			toast.error(message);
+			onError?.(error, message);
+		},
+		select: (data) => (select ? select(data) : data),
+		...queryOptions,
+	});
+};
+
 export const useBooksQuery = (options = {}) => {
 	const { queryKey = ["books"], onError, select, ...queryOptions } = options;
 

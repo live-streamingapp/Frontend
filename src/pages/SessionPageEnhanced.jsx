@@ -14,18 +14,13 @@ import {
 	FaUsers,
 	FaComments,
 	FaTimes,
-	FaUserSlash,
 	FaPhone,
 } from "react-icons/fa";
 import apiClient from "../utils/apiClient";
 
 /**
- * Enhanced Live Session Page with:
- * - Real-time chat
- * - Fullscreen mode
- * - Host controls (mute/remove students)
- * - Participant list
- * - Screen sharing
+ * Live Session Page with Agora WebRTC
+ * Features: Video/Audio streaming, Screen sharing, Chat, Participant list
  */
 const SessionPageEnhanced = () => {
 	const { sessionId } = useParams();
@@ -63,6 +58,7 @@ const SessionPageEnhanced = () => {
 	const localVideoRef = useRef(null);
 	const localAudioRef = useRef(null);
 	const screenTrackRef = useRef(null);
+	const dummyTrackRef = useRef(null); // Store dummy track for cleanup
 	const videoContainerRef = useRef(null);
 	const mainContainerRef = useRef(null);
 	const chatEndRef = useRef(null);
@@ -151,7 +147,7 @@ const SessionPageEnhanced = () => {
 
 				console.log("Join config:", { appId, channelName, hasToken: !!token });
 
-				// Create client
+				// Create client (only once)
 				clientRef.current = AgoraRTC.createClient({
 					mode: "rtc",
 					codec: "vp8",
@@ -215,7 +211,7 @@ const SessionPageEnhanced = () => {
 					token || null,
 					serverUid || null
 				);
-				console.log("Joined Agora channel successfully");
+				console.log("✅ Joined Agora channel successfully");
 
 				setIsJoined(true);
 				joinTimeRef.current = Date.now();
@@ -258,32 +254,70 @@ const SessionPageEnhanced = () => {
 					console.warn("Pre-populate remote users failed", preErr);
 				}
 
-				// Create and publish local tracks for everyone (host and students)
-				{
+				// Create and publish local tracks
+				try {
+					localVideoRef.current = await AgoraRTC.createCameraVideoTrack();
+
+					// Play local video
+					if (videoContainerRef.current) {
+						localVideoRef.current.play(videoContainerRef.current);
+					}
+
+					await clientRef.current.publish(localVideoRef.current);
+					console.log("✅ Video published");
+				} catch (err) {
+					console.error("❌ Video failed:", err.message);
+					localVideoRef.current = null;
+					setIsVideoOn(false);
+				}
+
+				try {
+					localAudioRef.current = await AgoraRTC.createMicrophoneAudioTrack();
+					await clientRef.current.publish(localAudioRef.current);
+					console.log("✅ Audio published");
+				} catch (err) {
+					console.error("❌ Audio failed:", err.message);
+					localAudioRef.current = null;
+					setIsAudioOn(false);
+				}
+
+				// If both failed, publish dummy track for visibility
+				if (!localVideoRef.current && !localAudioRef.current) {
+					console.log("⚠️ Both tracks failed - publishing dummy track");
+
 					try {
-						// Create video track
-						localVideoRef.current = await AgoraRTC.createCameraVideoTrack();
+						// Create 1x1 black canvas (minimal bandwidth)
+						const canvas = document.createElement("canvas");
+						canvas.width = 1;
+						canvas.height = 1;
+						const ctx = canvas.getContext("2d");
+						ctx.fillStyle = "black";
+						ctx.fillRect(0, 0, 1, 1);
 
-						// Create audio track
-						localAudioRef.current = await AgoraRTC.createMicrophoneAudioTrack();
+						const canvasStream = canvas.captureStream(1);
+						const videoTracks = canvasStream.getVideoTracks();
 
-						// Play local video
-						if (videoContainerRef.current) {
-							localVideoRef.current.play(videoContainerRef.current);
+						if (videoTracks.length === 0) {
+							throw new Error("No video tracks in canvas stream");
 						}
 
-						// Publish tracks
-						await clientRef.current.publish([
-							localVideoRef.current,
-							localAudioRef.current,
-						]);
+						dummyTrackRef.current = AgoraRTC.createCustomVideoTrack({
+							mediaStreamTrack: videoTracks[0],
+						});
 
-						console.log("Published tracks successfully");
-						toast.success("You are now live!");
-					} catch (err) {
-						console.error("Error creating/publishing tracks:", err);
-						toast.error("Could not access camera/microphone");
+						await clientRef.current.publish(dummyTrackRef.current);
+						console.log("✅ Dummy track published");
+
+						toast.info(
+							"Camera/mic unavailable - you are visible but without video/audio"
+						);
+					} catch (dummyErr) {
+						console.error("❌ Dummy track failed:", dummyErr.message);
+						toast.error("Could not join session - please check permissions");
 					}
+				} else {
+					console.log("✅ Track(s) published successfully");
+					toast.success("You are now live!");
 				}
 			} catch (err) {
 				console.error("Error joining channel:", err);
@@ -306,6 +340,7 @@ const SessionPageEnhanced = () => {
 					if (localVideoRef.current) toUnpublish.push(localVideoRef.current);
 					if (localAudioRef.current) toUnpublish.push(localAudioRef.current);
 					if (screenTrackRef.current) toUnpublish.push(screenTrackRef.current);
+					if (dummyTrackRef.current) toUnpublish.push(dummyTrackRef.current);
 					if (toUnpublish.length) {
 						clientRef.current
 							.unpublish(toUnpublish)
@@ -333,6 +368,12 @@ const SessionPageEnhanced = () => {
 						screenTrackRef.current.close();
 					}
 				}, "Screen track cleanup error");
+				safe(() => {
+					if (dummyTrackRef.current) {
+						dummyTrackRef.current.stop();
+						dummyTrackRef.current.close();
+					}
+				}, "Dummy track cleanup error");
 
 				localVideoRef.current = null;
 				localAudioRef.current = null;
@@ -356,7 +397,8 @@ const SessionPageEnhanced = () => {
 
 			// No session chat listeners to cleanup
 		};
-	}, [session, isJoined, sessionId, isAdmin, user, leaveSessionApi]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [session, isJoined, sessionId]);
 
 	// Ensure remote video tracks are attached if available after state updates
 	useEffect(() => {
@@ -389,19 +431,89 @@ const SessionPageEnhanced = () => {
 
 	// Toggle video
 	const toggleVideo = async () => {
-		if (localVideoRef.current) {
-			const newState = !isVideoOn;
-			await localVideoRef.current.setEnabled(newState);
-			setIsVideoOn(newState);
+		if (isVideoOn && localVideoRef.current) {
+			// Turn OFF video
+			try {
+				await clientRef.current.unpublish(localVideoRef.current);
+				localVideoRef.current.stop();
+				localVideoRef.current.close();
+				localVideoRef.current = null;
+				setIsVideoOn(false);
+			} catch (err) {
+				console.error("❌ Video disable failed:", err);
+			}
+		} else {
+			// Turn ON video
+			try {
+				localVideoRef.current = await AgoraRTC.createCameraVideoTrack();
+
+				// Remove dummy track if it exists
+				if (dummyTrackRef.current) {
+					try {
+						await clientRef.current.unpublish(dummyTrackRef.current);
+						dummyTrackRef.current.stop();
+						dummyTrackRef.current.close();
+						dummyTrackRef.current = null;
+					} catch (e) {
+						console.warn("Error removing dummy track:", e);
+					}
+				}
+
+				if (videoContainerRef.current) {
+					localVideoRef.current.play(videoContainerRef.current);
+				}
+
+				await clientRef.current.publish(localVideoRef.current);
+				setIsVideoOn(true);
+				toast.success("Camera turned on");
+			} catch (err) {
+				console.error("❌ Video enable failed:", err.message);
+				toast.error("Camera permission denied");
+				localVideoRef.current = null;
+				setIsVideoOn(false);
+			}
 		}
 	};
 
 	// Toggle audio
 	const toggleAudio = async () => {
-		if (localAudioRef.current) {
-			const newState = !isAudioOn;
-			await localAudioRef.current.setEnabled(newState);
-			setIsAudioOn(newState);
+		if (isAudioOn && localAudioRef.current) {
+			// Turn OFF audio
+			try {
+				await clientRef.current.unpublish(localAudioRef.current);
+				localAudioRef.current.stop();
+				localAudioRef.current.close();
+				localAudioRef.current = null;
+				setIsAudioOn(false);
+			} catch (err) {
+				console.error("❌ Audio disable failed:", err);
+			}
+		} else {
+			// Turn ON audio
+			try {
+				localAudioRef.current = await AgoraRTC.createMicrophoneAudioTrack();
+
+				// Remove dummy track if it exists
+				if (dummyTrackRef.current) {
+					try {
+						await clientRef.current.unpublish(dummyTrackRef.current);
+						dummyTrackRef.current.stop();
+						dummyTrackRef.current.close();
+						dummyTrackRef.current = null;
+					} catch (e) {
+						console.warn("Error removing dummy track:", e);
+					}
+				}
+
+				await clientRef.current.publish(localAudioRef.current);
+				setIsAudioOn(true);
+				toast.success("Microphone turned on");
+			} catch (err) {
+				console.error("❌ Audio enable failed:", err.message);
+				toast.error("Microphone permission denied");
+				localAudioRef.current = null;
+				setIsAudioOn(false);
+			}
 		}
 	};
 
@@ -508,20 +620,6 @@ const SessionPageEnhanced = () => {
 		e.preventDefault();
 		if (!newMessage.trim()) return;
 		toast.error("Chat is unavailable in this session.");
-	};
-
-	// Remove participant (Host only)
-	const removeParticipant = async (uid) => {
-		if (!isAdmin) return;
-
-		try {
-			// In real implementation, send API call to kick user
-			toast.success(`Removed user ${uid}`);
-			addSystemMessage(`User ${uid} was removed by host`);
-		} catch (err) {
-			console.error("Error removing user:", err);
-			toast.error("Failed to remove user");
-		}
 	};
 
 	// Leave session
@@ -738,18 +836,6 @@ const SessionPageEnhanced = () => {
 											? hostName || "Host"
 											: `User ${agoraUser.uid}`}
 									</div>
-									{/* Host Controls */}
-									{isAdmin && (
-										<div className="absolute top-4 right-4 flex gap-2">
-											<button
-												onClick={() => removeParticipant(agoraUser.uid)}
-												className="bg-red-500 bg-opacity-80 text-white p-2 rounded hover:bg-opacity-100"
-												title="Remove participant"
-											>
-												<FaUserSlash size={14} />
-											</button>
-										</div>
-									)}
 								</div>
 							))}
 
@@ -823,14 +909,6 @@ const SessionPageEnhanced = () => {
 											</p>
 										</div>
 									</div>
-									{isAdmin && (
-										<button
-											onClick={() => removeParticipant(agoraUser.uid)}
-											className="text-red-400 hover:text-red-300"
-										>
-											<FaUserSlash size={14} />
-										</button>
-									)}
 								</div>
 							))}
 						</div>

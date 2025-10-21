@@ -8,7 +8,7 @@ import {
 	HiPlay as Play,
 	HiPencil as Edit,
 	HiTrash as Trash2,
-	HiUpload as Upload,
+	// HiUpload as Upload, // Commented out - Upload recording feature disabled
 	HiVideoCamera as Video,
 } from "react-icons/hi";
 import {
@@ -20,7 +20,7 @@ import {
 import { formatDate } from "../../../utils/dateHelpers";
 import CreateSessionModal from "./CreateSessionModal";
 import EditSessionModal from "./EditSessionModal";
-import UploadRecordingModal from "./UploadRecordingModal";
+// import UploadRecordingModal from "./UploadRecordingModal"; // Commented out - Upload recording feature disabled
 
 const AdminSessionManagement = () => {
 	const navigate = useNavigate();
@@ -33,7 +33,7 @@ const AdminSessionManagement = () => {
 	});
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [editingSession, setEditingSession] = useState(null);
-	const [uploadingRecording, setUploadingRecording] = useState(null);
+	// const [uploadingRecording, setUploadingRecording] = useState(null); // Commented out - Upload recording feature disabled
 
 	const { data: sessionData, isLoading } = useAdminSessionsQuery({
 		page: currentPage,
@@ -174,6 +174,7 @@ const AdminSessionManagement = () => {
 		if (status === "completed") {
 			return (
 				<div className="flex space-x-2">
+					{/* Upload Recording button - Commented out - Feature disabled
 					<button
 						onClick={() => setUploadingRecording(session)}
 						className="flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded transition-colors"
@@ -181,6 +182,7 @@ const AdminSessionManagement = () => {
 						<Upload className="w-3 h-3" />
 						Upload Recording
 					</button>
+					*/}
 					<button
 						onClick={() => handleDeleteSession(session._id)}
 						disabled={deleteSessionMutation.isLoading}
@@ -534,12 +536,14 @@ const AdminSessionManagement = () => {
 				/>
 			)}
 
+			{/* Upload Recording Modal - Commented out - Feature disabled
 			{uploadingRecording && (
 				<UploadRecordingModal
 					session={uploadingRecording}
 					onClose={() => setUploadingRecording(null)}
 				/>
 			)}
+			*/}
 		</div>
 	);
 };

@@ -57,7 +57,7 @@ const buildInitialValues = (course) => {
 				? safeCourse.courseContent.map((content) => ({
 						title: content?.title ?? "",
 						preview: Boolean(content?.preview),
-						video: content?.video ?? null,
+						videoUrl: content?.videoUrl ?? content?.video ?? "",
 				  }))
 				: [createCourseContent()],
 
@@ -84,18 +84,8 @@ const optionalNumberSchema = (label, { max } = {}) => {
 	return schema;
 };
 
-const courseContentTemplate = { title: "", preview: false, video: null };
+const courseContentTemplate = { title: "", preview: false, videoUrl: "" };
 const createCourseContent = () => ({ ...courseContentTemplate });
-
-const getVideoLabel = (video) => {
-	if (!video) return "";
-	if (typeof video === "string") {
-		const parts = video.split("/");
-		const filename = parts[parts.length - 1] || video;
-		return filename;
-	}
-	return video.name ?? "Uploaded video";
-};
 
 const formatErrorMessage = (error) => {
 	if (!error) return "";
@@ -139,7 +129,7 @@ const validationSchema = Yup.object({
 			Yup.object({
 				title: Yup.string().trim().required("Content title is required"),
 				preview: Yup.boolean(),
-				video: Yup.mixed().nullable(),
+				videoUrl: Yup.string().url("Must be a valid URL").nullable(),
 			})
 		)
 		.min(1, "Add at least one course content section"),
@@ -226,10 +216,7 @@ export default function CreateCourseForm() {
 				courseContent: (values.courseContent ?? []).map((content) => ({
 					title: content.title.trim(),
 					preview: content.preview,
-					video:
-						typeof content.video === "string" && content.video
-							? content.video
-							: undefined,
+					video: content.videoUrl?.trim() || "", // Map videoUrl to 'video' for DB compatibility
 				})),
 			};
 
@@ -239,12 +226,6 @@ export default function CreateCourseForm() {
 			if (values.image) {
 				formData.append("image", values.image);
 			}
-
-			(values.courseContent ?? []).forEach((content) => {
-				if (content.video instanceof File) {
-					formData.append("videos", content.video);
-				}
-			});
 
 			if (isEditMode) {
 				updateCourseMutation.mutate({ courseId, payload: formData });
@@ -560,30 +541,29 @@ export default function CreateCourseForm() {
 						Preview Available
 					</label>
 
-					{/* Styled Video Upload */}
-					<label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#BB0E00] rounded-xl cursor-pointer hover:bg-[#ffe5e0] transition-colors mb-2">
-						{content.video ? (
-							<span className="text-gray-700 text-center text-sm">
-								{getVideoLabel(content.video)}
-							</span>
-						) : (
-							<span className="text-gray-500 text-center text-sm">
-								Click to upload or drag & drop video
-							</span>
-						)}
+					{/* Video URL Input */}
+					<div className="mb-2">
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Video URL (YouTube, Vimeo, or direct link)
+						</label>
 						<input
-							type="file"
-							accept="video/*"
-							onChange={(e) => {
-								if (e.target.files && e.target.files[0]) {
-									const arr = [...formik.values.courseContent];
-									arr[i].video = e.target.files[0];
-									formik.setFieldValue("courseContent", arr);
-								}
-							}}
-							className="hidden"
+							type="text"
+							name={`courseContent[${i}].videoUrl`}
+							placeholder="https://www.youtube.com/watch?v=..."
+							value={content.videoUrl || ""}
+							onChange={formik.handleChange}
+							onBlur={formik.handleBlur}
+							className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-[#BB0E00] outline-none"
 						/>
-					</label>
+						{getFieldError(`courseContent[${i}].videoUrl`) && (
+							<p className="text-red-500 text-sm mt-1">
+								{getFieldError(`courseContent[${i}].videoUrl`)}
+							</p>
+						)}
+						{content.videoUrl && (
+							<p className="text-xs text-gray-500 mt-1">✓ Video URL added</p>
+						)}
+					</div>
 
 					<button
 						type="button"
