@@ -36,6 +36,7 @@ const SessionPageEnhanced = () => {
 	const [isJoined, setIsJoined] = useState(false);
 	const joiningRef = useRef(false);
 	const hasLeftRef = useRef(false);
+	const leavingRef = useRef(false);
 	const joinTimeRef = useRef(null);
 	const [hostUid, setHostUid] = useState(null);
 	const [hostName, setHostName] = useState(null);
@@ -197,16 +198,23 @@ const SessionPageEnhanced = () => {
 					(curState, prevState) => {
 						console.log(`🔗 Connection: ${prevState} → ${curState}`);
 
+						const intentional = hasLeftRef.current || leavingRef.current;
 						if (curState === "DISCONNECTED") {
+							if (intentional) {
+								console.log("ℹ️ Disconnected after intentional leave");
+								return;
+							}
 							console.warn("⚠️ Disconnected from Agora");
 							toast.error("Connection lost. Please rejoin the session.");
 						} else if (curState === "RECONNECTING") {
+							if (intentional) return;
 							console.warn("⚠️ Reconnecting to Agora...");
 							toast.info("Reconnecting...");
 						} else if (
 							curState === "CONNECTED" &&
 							prevState === "RECONNECTING"
 						) {
+							if (intentional) return;
 							console.log("✅ Reconnected to Agora");
 							toast.success("Reconnected successfully!");
 						}
@@ -411,6 +419,7 @@ const SessionPageEnhanced = () => {
 
 			console.log("=== Cleanup: Leaving Agora ===");
 			hasLeftRef.current = true;
+			leavingRef.current = true;
 
 			if (clientRef.current) {
 				try {
@@ -495,7 +504,7 @@ const SessionPageEnhanced = () => {
 			// No session chat listeners to cleanup
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [session, isJoined, sessionId]);
+	}, [!!session, sessionId]);
 
 	// Ensure remote video tracks are attached if available after state updates
 	useEffect(() => {
@@ -722,6 +731,8 @@ const SessionPageEnhanced = () => {
 	// Leave session
 	const leaveSession = async () => {
 		try {
+			leavingRef.current = true;
+			hasLeftRef.current = true;
 			if (clientRef.current) {
 				// Unpublish local tracks first
 				try {
