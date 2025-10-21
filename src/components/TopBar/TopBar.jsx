@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
 import { GrYoutube } from "react-icons/gr";
 
 const socialLinks = [
-	{ icon: FaFacebookF, url: "https://facebook.com" },
+	{ icon: FaFacebookF, url: "https://facebook.com/vastuexpertabhishek" },
 	{ icon: FaTwitter, url: "https://twitter.com" },
 	{ icon: FaInstagram, url: "https://instagram.com" },
 	{ icon: GrYoutube, url: "https://www.youtube.com/@vastuabhishek" },

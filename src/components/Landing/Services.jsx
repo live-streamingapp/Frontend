@@ -31,11 +31,11 @@ const Services = () => {
 					<div className="flex-1 min-h-[280px] sm:min-h-[350px] flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
 						<div className="flex flex-row sm:flex-col w-full sm:w-1/2 gap-3 sm:gap-4">
 							<div
-								onClick={() => navigate("/vastu-residential")}
+								onClick={() => navigate("/vastu-home")}
 								className="cursor-pointer hover:scale-102 transition-all .3s ease-in-out p-3 sm:p-4 flex-1 sm:h-[70%] bg-[#ee6340] border border-[#ee6340] rounded-[15px] relative overflow-hidden"
 							>
 								<span className="text-white text-sm sm:text-base lg:text-[1.15rem] font-semibold">
-									Residential <br /> Vastu
+									Vastu for <br /> Home
 								</span>
 								<FaHome
 									size={"6rem"}
@@ -54,7 +54,7 @@ const Services = () => {
 									className="text-white sm:text-[4rem]"
 								/>
 								<span className="text-white text-sm sm:text-base lg:text-[1.15rem] leading-tight font-semibold">
-									Industrial <br /> Vastu
+									Vastu for <br /> Factory
 								</span>
 								<div className="h-[30px] w-[30px] sm:h-[50px] sm:w-[50px] absolute -top-[30%] left-[20%] rounded-full bg-white/20" />
 								<div className="h-[30px] w-[30px] sm:h-[50px] sm:w-[50px] absolute top-[60%] rounded-full bg-white/20" />
@@ -82,7 +82,7 @@ const Services = () => {
 								className="cursor-pointer hover:scale-102 transition-all .3s ease-in-out p-3 sm:p-4 flex-1 sm:h-[70%] bg-[#ef4e40] border border-[#ef4e40] rounded-[15px] relative overflow-hidden"
 							>
 								<span className="text-white text-sm sm:text-base lg:text-[1.15rem] font-semibold">
-									Courses
+									Advanced Vastu Courses
 								</span>
 								<MdMenuBook
 									size={"6rem"}

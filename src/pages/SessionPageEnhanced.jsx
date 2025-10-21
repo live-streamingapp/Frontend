@@ -87,6 +87,45 @@ const SessionPageEnhanced = () => {
 			try {
 				const response = await apiClient.get(`/sessions/${sessionId}`);
 				const s = response.data?.data;
+
+				// Check if session has ended or is not live
+				const now = new Date();
+				let isEnded = false;
+				let endReason = "";
+
+				// Check if session is completed
+				if (s.status === "completed") {
+					isEnded = true;
+					endReason = "This session has already ended.";
+				}
+				// Check if session was cancelled
+				else if (s.status === "cancelled") {
+					isEnded = true;
+					endReason = "This session has been cancelled.";
+				}
+				// Check if session ended time has passed
+				else if (s.endedAt && new Date(s.endedAt) < now) {
+					isEnded = true;
+					endReason = "This session has already ended.";
+				}
+				// Check if session is not yet started and past scheduled time + duration
+				else if (s.scheduledDate && s.duration) {
+					const scheduledStart = new Date(s.scheduledDate);
+					const sessionEndTime = new Date(
+						scheduledStart.getTime() + s.duration * 60 * 1000
+					);
+					if (now > sessionEndTime && s.status !== "live") {
+						isEnded = true;
+						endReason = "This session has expired and is no longer available.";
+					}
+				}
+
+				if (isEnded) {
+					setSession({ ...s, isEnded: true, endReason });
+					setLoading(false);
+					return;
+				}
+
 				setSession(s);
 				// Do not preload custom chat; will use RTM if enabled
 				setLoading(false);
@@ -126,7 +165,7 @@ const SessionPageEnhanced = () => {
 
 	// Join Agora channel
 	useEffect(() => {
-		if (!session || isJoined || joiningRef.current) return;
+		if (!session || session.isEnded || isJoined || joiningRef.current) return;
 
 		const joinChannel = async () => {
 			try {
@@ -836,6 +875,71 @@ const SessionPageEnhanced = () => {
 					>
 						Go Back
 					</button>
+				</div>
+			</div>
+		);
+	}
+
+	// Show ended session message
+	if (session.isEnded) {
+		return (
+			<div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+				<div className="bg-gray-800 rounded-lg p-8 max-w-md w-full text-center border border-gray-700">
+					<div className="mb-6">
+						<div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+							<FaPhone className="text-white text-3xl rotate-135" />
+						</div>
+						<h3 className="text-2xl font-bold text-white mb-2">
+							{session.status === "cancelled"
+								? "Session Cancelled"
+								: "Session Ended"}
+						</h3>
+						<p className="text-gray-400 mb-4">
+							{session.endReason ||
+								"This session has already ended and is no longer available."}
+						</p>
+					</div>
+
+					<div className="bg-gray-700 rounded-lg p-4 mb-6 text-left">
+						<h4 className="text-white font-semibold mb-2">{session.title}</h4>
+						<p className="text-gray-400 text-sm mb-1">
+							{session.course?.title}
+						</p>
+						{session.status === "completed" && (
+							<p className="text-green-400 text-sm">Status: Completed</p>
+						)}
+						{session.endedAt && (
+							<p className="text-gray-400 text-sm">
+								Ended: {new Date(session.endedAt).toLocaleString()}
+							</p>
+						)}
+					</div>
+
+					<div className="flex flex-col gap-2">
+						{session.recording?.isRecorded &&
+							session.recording?.recordingUrl && (
+								<a
+									href={session.recording.recordingUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+								>
+									Watch Recording
+								</a>
+							)}
+						<button
+							onClick={() => navigate("/my-sessions")}
+							className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
+						>
+							View My Sessions
+						</button>
+						<button
+							onClick={() => navigate(-1)}
+							className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
+						>
+							Go Back
+						</button>
+					</div>
 				</div>
 			</div>
 		);

@@ -27,11 +27,11 @@ const PremiumServices = () => {
 					<div className="flex flex-wrap justify-center gap-4 sm:gap-5 md:gap-6">
 						{[
 							{
-								title: "Numero Vastu Consultation",
-								color: "from-red-600 to-red-400",
-								text: "text-red-600",
-								icon: icon1,
-								path: "/numero-consultation",
+								title: "Vastu Consultation",
+								color: "from-orange-600 to-orange-400",
+								text: "text-orange-600",
+								icon: icon2,
+								path: "/vastu-consultation",
 							},
 							{
 								title: "Astrology Consultation",
@@ -41,14 +41,14 @@ const PremiumServices = () => {
 								path: "/astrology-consultation",
 							},
 							{
-								title: "Vastu Consultation",
-								color: "from-orange-600 to-orange-400",
-								text: "text-orange-600",
-								icon: icon2,
-								path: "/vastu-consultation",
+								title: "Numero Vastu Consultation",
+								color: "from-red-600 to-red-400",
+								text: "text-red-600",
+								icon: icon1,
+								path: "/numero-consultation",
 							},
 							{
-								title: "Designing Consultation",
+								title: "Logo Designing Consultation",
 								color: "from-green-600 to-green-400",
 								text: "text-orange-600",
 								icon: icon2,

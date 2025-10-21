@@ -76,30 +76,25 @@ export const menuOptions = [
 			{ label: "Vastu For Office", path: "/vastu-office" },
 			{ label: "Vastu For Home", path: "/vastu-home" },
 			{ label: "Vastu For Factory/Commercial", path: "/vastu-industrial" },
+			{ label: "Numero Consultation", path: "/numero-consultation" },
+			{ label: "Astrology Consultation", path: "/astrology-consultation" },
+			{ label: "Vastu Consultation", path: "/vastu-consultation" },
 		],
 	},
-	{
-		label: "Packages",
-		path: "/package",
-		links: [
-			{ label: "Numero Package", path: "/numero-consultation" },
-			{ label: "Astrology Package", path: "/astrology-consultation" },
-			{ label: "Vastu Package", path: "/vastu-consultation" },
-		],
-	},
-	{
-		label: "Books",
-		path: "/books",
-	},
-	{
-		label: "Services",
-		path: "/services",
-	},
+
+	// {
+	// 	label: "Services",
+	// 	path: "/services",
+	// },
 	{
 		label: "Courses",
 		path: "/courses",
 	},
 	{ label: "Blogs", path: "/blogs" },
 	{ label: "Podcast", path: "/podcast" },
+	{
+		label: "Books",
+		path: "/books",
+	},
 	{ label: "Contact", path: "/contact" },
 ];

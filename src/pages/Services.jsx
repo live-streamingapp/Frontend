@@ -16,7 +16,6 @@ const Services = () => {
 
 	const [addingToCartId, setAddingToCartId] = useState(null); // Track which service is being added
 	const [filters, setFilters] = useState({
-		category: "",
 		search: "",
 		page: 1,
 		limit: 12,
@@ -26,6 +25,7 @@ const Services = () => {
 	const queryParams = {
 		...filters,
 		isActive: "true", // Only show active services
+		serviceType: "service", // Only show standalone services (not consultations or packages)
 	};
 
 	// Use services query hook
@@ -141,9 +141,9 @@ const Services = () => {
 
 			{/* Filters */}
 			<div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="flex items-center gap-4">
 					{/* Search */}
-					<div>
+					<div className="flex-1">
 						<input
 							type="text"
 							placeholder="Search services..."
@@ -153,38 +153,23 @@ const Services = () => {
 						/>
 					</div>
 
-					{/* Category Filter */}
-					<div>
-						<select
-							value={filters.category}
-							onChange={(e) => handleFilterChange("category", e.target.value)}
-							className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-						>
-							<option value="">All Categories</option>
-							<option value="vastu">Vastu</option>
-							<option value="astrology">Astrology</option>
-							<option value="numerology">Numerology</option>
-							<option value="spiritual">Spiritual</option>
-							<option value="other">Other</option>
-						</select>
-					</div>
-
 					{/* Clear Filters */}
-					<div>
-						<button
-							onClick={() =>
-								setFilters({
-									category: "",
-									search: "",
-									page: 1,
-									limit: 12,
-								})
-							}
-							className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-						>
-							Clear Filters
-						</button>
-					</div>
+					{filters.search && (
+						<div>
+							<button
+								onClick={() =>
+									setFilters({
+										search: "",
+										page: 1,
+										limit: 12,
+									})
+								}
+								className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+							>
+								Clear
+							</button>
+						</div>
+					)}
 				</div>
 			</div>
 

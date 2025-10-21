@@ -3,8 +3,8 @@ import { FaEnvelope, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const services = [
-	{ label: "Residential Vastu", path: "/vastu-home" },
-	{ label: "Commercial Vastu", path: "/vastu-industrial" },
+	{ label: "Vasti For Home", path: "/vastu-home" },
+	{ label: "Vastu For Factory/Commercial", path: "/vastu-industrial" },
 	// { label: "Online Consultation", path: "/services/online" },
 	{ label: "Vastu Remedies", path: "/services" },
 	{ label: "Vastu for Office", path: "/vastu-office" },

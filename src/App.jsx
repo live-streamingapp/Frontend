@@ -33,6 +33,7 @@ import EditProfile from "./components/StudentProfile/EditProfile";
 import StudentUnifiedChatPage from "./pages/StudentUnifiedChatPage";
 import AstrologerUnifiedChatPage from "./pages/AstrologerUnifiedChatPage";
 import MyCourses from "./components/StudentMyCourses/MyCourses";
+import Notifications from "./pages/Notifications";
 
 import BlogManagement from "./components/SocialForm/BlogManagement";
 import PodcastManagement from "./components/SocialForm/PodcastManagement";
@@ -206,6 +207,7 @@ function App() {
 					<Route path="profile" element={<Profile />} />
 					<Route path="edit-profile" element={<EditProfile />} />
 					<Route path="change-password" element={<ChangePassword />} />
+					<Route path="notifications" element={<Notifications />} />
 					<Route path="my-courses" element={<MyCourses />} />
 					<Route path="my-orders" element={<MyOrders />} />
 					<Route path="my-sessions" element={<StudentSessions />} />

@@ -80,7 +80,12 @@ const invalidateNotifications = (queryClient, userId = null) => {
 // Mutation to mark notification as read
 export const useMarkAsReadMutation = (options = {}) => {
 	const queryClient = useQueryClient();
-	const { onSuccess, onError, ...mutationOptions } = options;
+	const {
+		onSuccess,
+		onError,
+		enableToast = false,
+		...mutationOptions
+	} = options;
 
 	return useMutation({
 		mutationFn: async (notificationId) => {
@@ -91,6 +96,9 @@ export const useMarkAsReadMutation = (options = {}) => {
 		},
 		onSuccess: (data, variables, context) => {
 			invalidateNotifications(queryClient);
+			if (enableToast) {
+				toast.success("Notification marked as read");
+			}
 			onSuccess?.(data, variables, context);
 		},
 		onError: (error, variables, context) => {
@@ -98,7 +106,10 @@ export const useMarkAsReadMutation = (options = {}) => {
 				error,
 				"Failed to mark notification as read"
 			);
-			toast.error(message);
+			if (enableToast) {
+				toast.error(message);
+			}
+			console.error("Mark as read error:", error);
 			onError?.(error, message, variables, context);
 		},
 		...mutationOptions,
@@ -108,7 +119,12 @@ export const useMarkAsReadMutation = (options = {}) => {
 // Mutation to mark all notifications as read
 export const useMarkAllAsReadMutation = (options = {}) => {
 	const queryClient = useQueryClient();
-	const { onSuccess, onError, ...mutationOptions } = options;
+	const {
+		onSuccess,
+		onError,
+		enableToast = true,
+		...mutationOptions
+	} = options;
 
 	return useMutation({
 		mutationFn: async (userId) => {
@@ -119,7 +135,9 @@ export const useMarkAllAsReadMutation = (options = {}) => {
 		},
 		onSuccess: (data, variables, context) => {
 			invalidateNotifications(queryClient, variables);
-			toast.success("All notifications marked as read");
+			if (enableToast) {
+				toast.success("All notifications marked as read");
+			}
 			onSuccess?.(data, variables, context);
 		},
 		onError: (error, variables, context) => {
@@ -127,7 +145,9 @@ export const useMarkAllAsReadMutation = (options = {}) => {
 				error,
 				"Failed to mark all notifications as read"
 			);
-			toast.error(message);
+			if (enableToast) {
+				toast.error(message);
+			}
 			onError?.(error, message, variables, context);
 		},
 		...mutationOptions,

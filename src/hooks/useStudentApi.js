@@ -217,3 +217,30 @@ export const useMyBookingsQuery = (options = {}) => {
 		...queryOptions,
 	});
 };
+
+// Get student's progress for a specific course
+export const useStudentProgressQuery = (courseId, options = {}) => {
+	const {
+		queryKey = ["student", "progress", courseId],
+		onError,
+		...queryOptions
+	} = options;
+
+	return useQuery({
+		queryKey,
+		queryFn: async () => {
+			const response = await apiClient.get(`/courses/progress/${courseId}`);
+			return response.data?.data;
+		},
+		enabled: !!courseId,
+		staleTime: 1000 * 60 * 2, // 2 minutes
+		onError: (error) => {
+			const message = getErrorMessage(error, "Failed to fetch course progress");
+			if (options.enableToast !== false) {
+				toast.error(message);
+			}
+			onError?.(error, message);
+		},
+		...queryOptions,
+	});
+};

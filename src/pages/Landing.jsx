@@ -10,7 +10,7 @@ const FreeServices = lazy(() => import("../components/Landing/FreeServices"));
 const UpcomingEvents = lazy(() =>
 	import("../components/Landing/UpcomingEvents")
 );
-const Blogs = lazy(() => import("../components/Landing/Blogs"));
+const Podcasts = lazy(() => import("../components/Podcasts/Podcasts"));
 const TestimonialsSection = lazy(() =>
 	import("../components/Landing/TestimonialsSection")
 );
@@ -60,7 +60,7 @@ const Landing = () => {
 				delay={300}
 			>
 				<Suspense fallback={<SectionSkeleton height="400px" />}>
-					<Blogs />
+					<Podcasts />
 				</Suspense>
 			</LazyLoadWrapper>
 

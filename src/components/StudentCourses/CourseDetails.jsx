@@ -148,12 +148,21 @@ const CourseDetails = () => {
 							<h2 className="text-[1.25rem] font-semibold text-gray-900">
 								Live Sessions
 							</h2>
-							<button
-								onClick={() => navigate("/my-sessions")}
-								className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-							>
-								View All Sessions →
-							</button>
+							<div className="flex gap-2">
+								<button
+									onClick={() => navigate(`/course/${id}/sessions`)}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									View Course Sessions →
+								</button>
+								<span className="text-gray-300">|</span>
+								<button
+									onClick={() => navigate("/my-sessions")}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									All My Sessions
+								</button>
+							</div>
 						</div>
 
 						{/* Sort: live first, then upcoming soonest, then latest completed */}
